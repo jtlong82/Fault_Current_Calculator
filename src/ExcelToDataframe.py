@@ -26,7 +26,7 @@ def excel_to_dataframes(file_path):
             data.append([cell.value for cell in row])
 
         # Create a DataFrame from the data
-        df = pd.DataFrame(data[1:], columns=data[0])
+        df = pd.DataFrame(data)
 
         # Add the DataFrame to the dictionary with the sheet name as the key
         dfs[sheet_name] = df
