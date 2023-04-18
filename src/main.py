@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog
 from ExcelToDataframe import excel_to_dataframes
+from CleanDataframe import clean_dataframe
 
 def main():
     # Create a tkinter root window (it won't be shown)
@@ -16,6 +17,7 @@ def main():
     # If the user selects a file, read the sheets and print the DataFrames
     if file_path:
         dataframes = excel_to_dataframes(file_path)
+        clean_dataframe(dataframes)
 
         for sheet_name, df in dataframes.items():
             print(f'Sheet name: {sheet_name}')
