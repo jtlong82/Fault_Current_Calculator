@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog
-from excel_to_dataframe import excel_to_dataframes
+from ExcelToDataframe import excel_to_dataframes
 
 def main():
     # Create a tkinter root window (it won't be shown)
