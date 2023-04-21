@@ -1,6 +1,9 @@
 def zbusmenu(dataframes):
+    # Filter dataframes to only include those with 'Bus' in the sheet name
+    bus_dataframes = {k: v for k, v in dataframes.items() if 'Bus' in k}
+
     print("Please select bus voltage level:")
-    voltage_levels = sorted(set(sheet_name.split('-')[0] for sheet_name in dataframes))
+    voltage_levels = sorted(set(sheet_name.split('-')[0] for sheet_name in bus_dataframes))
     for idx, voltage in enumerate(voltage_levels):
         print(f"{idx + 1}. {voltage}")
 
@@ -8,7 +11,7 @@ def zbusmenu(dataframes):
     selected_voltage = voltage_levels[voltage_choice]
 
     # Select a record from the chosen voltage level DataFrame
-    voltage_df = dataframes[selected_voltage]
+    voltage_df = bus_dataframes[selected_voltage]
     voltage_df = voltage_df.reset_index(drop=True)  # Reset index to avoid any issues
     stations = voltage_df.iloc[1:, 0].tolist()  # Get station names from the first column, excluding the header row
 

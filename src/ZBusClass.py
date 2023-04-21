@@ -9,9 +9,22 @@ class ZBus:
         self.z_100MVA = complex(selected_record.iloc[4])
         self.d_e_120V = float(selected_record.iloc[5])
         self.short_circuit_MVA_1 = float(selected_record.iloc[6])
-        self.zo_100MVA = complex(selected_record.iloc[7])
-        self.z_L_G_100MVA = complex(selected_record.iloc[8])
-        self.short_circuit_MVA_2 = float(selected_record.iloc[9])
+
+        # Check if selected_record has enough elements for 4kv bus sheet (only has 8 columns)
+        if len(selected_record) > 7:
+            self.zo_100MVA = complex(selected_record.iloc[7])
+        else:
+            self.zo_100MVA = complex(0)
+
+        if len(selected_record) > 8:
+            self.z_L_G_100MVA = complex(selected_record.iloc[8])
+        else:
+            self.z_L_G_100MVA = complex(0)
+
+        if len(selected_record) > 9:
+            self.short_circuit_MVA_2 = float(selected_record.iloc[9])
+        else:
+            self.short_circuit_MVA_2 = 0  # or any default value      
 
     def display_info(self):
         print(f"Station: {self.station}")

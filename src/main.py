@@ -6,6 +6,45 @@ from zbusmenu import zbusmenu
 from ZBusClass import ZBus
 
 def main():
+    dataframes = None
+    zbus_selection = None
+
+    while True:
+        print("\nMenu Options:")
+        print("1. Load Impedance Sheets (Andy Sheets)")
+        print("2. Select Bus and Station/Transformer")
+        print("3. Display Bus Attributes")
+        print("4. Exit")
+
+        choice = int(input("Please enter the number corresponding to your choice: "))
+
+        if choice == 1:
+            # Load impedance sheets and clean dataframes
+            dataframes = load_impedance_sheets()
+
+        elif choice == 2:
+            if dataframes is not None:
+                # Menu to select bus and station/transformer to retrieve zbus values and save into Zbus
+                zbus_choice = zbusmenu(dataframes)
+                zbus_selection = ZBus(zbus_choice)
+            else:
+                print("Please load impedance sheets first.")
+
+        elif choice == 3:
+            if zbus_selection is not None:
+                print("\nBus Attributes:")
+                zbus_selection.display_info()
+            else:
+                print("Please select a bus and station/transformer first.")
+
+        elif choice == 4:
+            print("Exiting...")
+            break
+
+        else:
+            print("Invalid choice. Please enter a valid option.")
+
+def load_impedance_sheets():
     # Create a tkinter root window (it won't be shown)
     root = tk.Tk()
     root.withdraw()
@@ -28,12 +67,7 @@ def main():
     else:
         print('No file was selected.')
 
-    #Menu to select bus and station/transformer to retrieve zbus values and save into Zbus class
-    zbus_choice = zbusmenu(dataframes)
-    zbus_selection = ZBus(zbus_choice)
-
-    print("\nBus Attributes:")
-    zbus_selection.display_info()
+    return dataframes
 
 if __name__ == '__main__':
     main()

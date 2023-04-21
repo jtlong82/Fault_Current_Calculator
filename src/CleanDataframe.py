@@ -1,6 +1,9 @@
 def clean_dataframe(dataframe):
     cleaned_dataframe = {}
     
+def clean_dataframe(dataframe):
+    cleaned_dataframe = {}
+    
     for sheet_name, df in dataframe.items():
         # Check if the sheet name contains the word "Bus"
         if "Bus" in sheet_name:
@@ -21,6 +24,11 @@ def clean_dataframe(dataframe):
             
             # Renumber columns
             df.columns = range(df.shape[1])
+
+            # Set None values in iloc[7], iloc[8], and iloc[9] to complex(0)
+            for col_idx in [7, 8, 9]:
+                if col_idx < df.shape[1]:  # Check if the DataFrame has enough columns
+                    df.iloc[:, col_idx] = df.iloc[:, col_idx].apply(lambda x: complex(0) if x is None else x)
 
         # Check if the sheet name contains the word "36kV Line"
         elif "36kV Line" in sheet_name:
