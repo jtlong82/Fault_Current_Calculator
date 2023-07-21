@@ -1,5 +1,4 @@
-def clean_dataframe(dataframe):
-    cleaned_dataframe = {}
+
     
 def clean_dataframe(dataframe):
     cleaned_dataframe = {}
