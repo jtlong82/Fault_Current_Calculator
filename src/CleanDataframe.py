@@ -4,6 +4,10 @@ def clean_dataframe(dataframe):
     cleaned_dataframe = {}
     
     for sheet_name, df in dataframe.items():
+        # Extract the voltage level from the sheet name
+        if 'kV' in sheet_name:
+            voltage_level = float(sheet_name.split('k')[0])
+
         # Check if the sheet name contains the word "Bus"
         if "Bus" in sheet_name:
             # Drop the first two rows
@@ -21,8 +25,8 @@ def clean_dataframe(dataframe):
             # Remove empty columns
             df = df.dropna(axis=1, how='all')
             
-            # Renumber columns
-            df.columns = range(df.shape[1])
+            # Set the column names to be the first row in the DataFrame
+            df = df.rename(columns=df.iloc[0]).drop(df.index[0])
 
             # Set None values in iloc[7], iloc[8], and iloc[9] to complex(0)
             for col_idx in [7, 8, 9]:
@@ -46,8 +50,11 @@ def clean_dataframe(dataframe):
             # Remove empty columns
             df = df.dropna(axis=1, how='all')
 
+            # Set the column names to be the first row in the DataFrame
+            df = df.rename(columns=df.iloc[0]).drop(df.index[0])
+
         # Check if the sheet name contains the word "13kV Line"
-        elif "13kV Line" in sheet_name:
+        elif "13.2kV Line" in sheet_name:
             # Drop rows
             df = df.drop([0, 1, 3, 11, 13, 22, 23, 24, 25], errors='ignore')
 
@@ -63,8 +70,11 @@ def clean_dataframe(dataframe):
             # Remove empty columns
             df = df.dropna(axis=1, how='all')
 
+            # Set the column names to be the first row in the DataFrame
+            df = df.rename(columns=df.iloc[0]).drop(df.index[0])
+
         # Check if the sheet name contains the word "11kV Line"
-        elif "11kV Line" in sheet_name:
+        elif "11.5kV Line" in sheet_name:
             # Drop rows
             df = df.drop([0, 1, 3, 9, 10, 11, 13, 17, 18, 19, 20, 21, 22, 28, 29], errors='ignore')
 
@@ -80,8 +90,11 @@ def clean_dataframe(dataframe):
             # Remove empty columns
             df = df.dropna(axis=1, how='all')
 
+            # Set the column names to be the first row in the DataFrame
+            df = df.rename(columns=df.iloc[0]).drop(df.index[0])
+
         # Check if the sheet name contains the word "4kV Line"
-        elif "4kV Line" in sheet_name:
+        elif "4.6kV Line" in sheet_name:
             # Drop rows
             df = df.drop([0, 1, 3, 12, 14], errors='ignore')
 
@@ -97,12 +110,16 @@ def clean_dataframe(dataframe):
             # Remove empty columns
             df = df.dropna(axis=1, how='all')
 
+            # Set the column names to be the first row in the DataFrame
+            df = df.rename(columns=df.iloc[0]).drop(df.index[0])
+
         # Reset index to renumber rows for both "Bus" and "Line" sheets
         df = df.reset_index(drop=True)
-            
-        # Renumber columns for both "Bus" and "Line" sheets
-        df.columns = range(df.shape[1])
+
+        # Add a new column for Voltage_Level
+        df["Voltage_Level"] = voltage_level
         
+        # Save the cleaned dataframe back to dictionary
         cleaned_dataframe[sheet_name] = df
         
     return cleaned_dataframe

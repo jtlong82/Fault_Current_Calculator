@@ -13,7 +13,7 @@ def zbusmenu(dataframes):
     # Select a record from the chosen voltage level DataFrame
     voltage_df = bus_dataframes[selected_voltage]
     voltage_df = voltage_df.reset_index(drop=True)  # Reset index to avoid any issues
-    stations = voltage_df.iloc[1:, 0].tolist()  # Get station names from the first column, excluding the header row
+    stations = voltage_df.iloc[:, 0].tolist()  # Assuming that the first column now has a name and contains the station names
 
     # Print menu for station selection
     print("Please select a station:")
@@ -23,7 +23,9 @@ def zbusmenu(dataframes):
     # Get user input for station selection
     selected_station = int(input("Enter the number corresponding to the station you want to select: ")) - 1
 
-    selected_record = voltage_df.iloc[selected_station + 1]  # Add 1 to account for the excluded label row
-    selected_record.index = voltage_df.iloc[0]  # Set the index of the selected_record to the column names from the original DataFrame
+    selected_record = voltage_df.iloc[selected_station]  # We no longer need to add 1, as we're using the true index
+    # The index of selected_record should already be the column names, but you can reset it like this if needed
+    # selected_record.index = voltage_df.columns
 
     return selected_record
+
