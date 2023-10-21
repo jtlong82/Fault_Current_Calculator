@@ -34,11 +34,21 @@ class ZBus:
         self.Zbase = (self.voltage_level ** 2) / self.MVA_base
         self.Ibase = (self.MVA_base) / ((3 ** 0.5) * self.voltage_level)
         self.X_R_pos = (self.z_100MVA.imag / 100) / (self.z_100MVA.real / 100)
-        self.three_ph_fault_pu = ((self.z_100MVA.conjugate() / 100) / ((self.z_100MVA.real / 100) ** 2 + (self.z_100MVA.imag / 100) ** 2))
+
+        #3-ph fault
+        self.three_ph_fault_pu = 1 / (self.z_100MVA / 100)
         self.three_ph_fault_pu_mag = abs(self.three_ph_fault_pu)
         self.three_ph_fault_pu_ang_rads = cmath.phase(self.three_ph_fault_pu)
         self.three_ph_fault_pu_ang_degs = math.degrees(self.three_ph_fault_pu_ang_rads)
         self.three_ph_fault = (self.three_ph_fault_pu_mag * self.Ibase * 1000)
+
+        # Calculating the line-to-line fault current as soon as the object is initiated
+        self.l_l_fault_pos = 1 / ((self.z_100MVA / 100) * 2) #Ia positive sequence
+        self.l_l_fault_pu = (-1j) * (3 ** 0.5) * self.l_l_fault_pos #Ib fault current pu
+        self.l_l_fault_pu_mag = abs(self.l_l_fault_pu)
+        self.l_l_fault_pu_ang_rads = cmath.phase(self.l_l_fault_pu)
+        self.l_l_fault_pu_ang_degs = math.degrees(self.l_l_fault_pu_ang_rads)
+        self.l_l_fault = self.l_l_fault_pu_mag * self.Ibase * 1000
         
         if self.voltage_level != 4.6:
             # Calculating the line to ground fault current
@@ -49,6 +59,15 @@ class ZBus:
             self.l_g_fault_pu_ang_rads = cmath.phase(self.l_g_fault_pu)
             self.l_g_fault_pu_ang_degs = math.degrees(self.l_g_fault_pu_ang_rads)
             self.l_g_fault = 3 * self.l_g_fault_pu_mag * self.Ibase * 1000
+
+            # Calculating the line-to-line-to-ground fault current as soon as the object is initiated
+            self.l_l_g_fault_pos = 1 / ((self.z_100MVA / 100) * 2) #Ia positive sequence
+            self.l_l_g_fault_zero = 1 / ((self.z_100MVA / 100) * 2) #Ia zero sequence3
+            self.l_l_g_fault_pu = (-1j) * (3 ** 0.5) * self.l_l_g_fault_pos #Ib fault current pu
+            self.l_l_g_fault_pu_mag = abs(self.l_l_g_fault_pu)
+            self.l_l_g_fault_pu_ang_rads = cmath.phase(self.l_l_g_fault_pu)
+            self.l_l_g_fault_pu_ang_degs = math.degrees(self.l_l_g_fault_pu_ang_rads)
+            self.l_l_g_fault = self.l_l_g_fault_pu_mag * self.Ibase * 1000
         
     def display_info(self):
         print(f"Station: {self.station}")
@@ -67,6 +86,10 @@ class ZBus:
         if self.voltage_level != 4.6:
             print(f"X/R Zero Seq at Bus: {self.X_R_zero:.2f}")
         print("Available fault currents at Bus: ")
-        print(f"ABC: {self.three_ph_fault:.0f} Amps {self.three_ph_fault_pu_ang_degs:.2f} Degs")
+        print(f"ABC: {self.three_ph_fault:.0f}∠{self.three_ph_fault_pu_ang_degs:.2f}° Amps")
         if self.voltage_level != 4.6:
-            print(f"AG: {self.l_g_fault:.0f} Amps {self.l_g_fault_pu_ang_degs:.2f} Degs")
+            print(f"AG: {self.l_g_fault:.0f}∠{self.l_g_fault_pu_ang_degs:.2f}° Amps")
+        print(f"BC: {self.l_l_fault:.0f}∠{self.l_l_fault_pu_ang_degs:.2f}° Amps")
+        if self.voltage_level != 4.6:
+            print(f"BCG: {self.l_l_g_fault:.0f}∠{self.l_l_g_fault_pu_ang_degs:.2f}° Amps")
+        
