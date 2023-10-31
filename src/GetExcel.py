@@ -111,9 +111,12 @@ def load_line_trace():
             first_letter = new_sheet_name[0]
             voltage_level = voltage_map.get(first_letter, None)
             if voltage_level is not None:
-                dataframes[new_sheet_name]['Voltage_Level'] = voltage_level  # Change this line
+                dataframes[new_sheet_name]['Voltage_Level'] = voltage_level 
             else:
                 print("Warning: Unrecognized line trace sheet name. Cannot determine voltage level. Line trace .xls file name should start with the line name, i.e R-21-MF-G-X.")
+        else:
+            print('No file was selected.')
+            dataframes = None  # Return None if no file is selected  
             
             #DEBUGGING
             #for sheet_name, df in dataframes.items():

@@ -3,19 +3,56 @@ import cmath
 import math
 
 class ZLine:
-    def __init__(self, line_trace):
-        self.type = str(line_trace.iloc['Type'])
-        self.conductor_size = str(line_trace.iloc['Conductor Size'])
-        self.conductor_type = str(line_trace.iloc['Conductor Type'])
-        self.length = float(line_trace.iloc['Length'])
-        self.voltage_level = float(line_trace.iloc['Voltage_Level'])
-        self.z_100MVA = complex(line_trace.iloc['% Z+ @ 100 MVA'])
-        if self.voltage_level != 4.6:
-            self.zo_100MVA = complex(line_trace.iloc['% Zo @ 100 MVA'])
-        self.mapped_conductor_type = str(line_trace.iloc['Mapped Wire Type'])
-        if self.voltage_level == 36 & self.type == 'OH Pri. Conductor':
-            self.pole_type = str(line_trace.iloc['Pole Type'])
-            self.ground = str(line_trace.iloc['Ground?'])
+    def __init__(self, df_linetrace):
+        self.df_linetrace = df_linetrace
+        self.total_Z_100MVA = 0 
+        self.total_Zo_100MVA = 0
+        self.total_length_feet = 0
+        self.total_length_miles = 0
+
+
+    def get_individual_parameters(self):
+        self.total_Z_100MVA = 0  # Initialize accumulator for 'Total % Z @ 100 MVA'
+        self.total_Zo_100MVA = 0
+        self.total_length_feet = 0
+        self.total_length_miles = 0
+
+        for index, row in self.df_linetrace.iterrows():
+            line_type = str(row['Type'])
+            conductor_size = str(row['Conductor Size'])
+            conductor_type = str(row['Conductor Type'])
+            length = float(row['Length'])
+            voltage_level = float(row['Voltage_Level'])
+            z_100MVA = complex(row['% Z+ @ 100 MVA'])
+            zo_100MVA = complex(row['% Zo @ 100 MVA'])
+            mapped_wire_type = str(row['Mapped Wire Type'])
+            pole_type = str(row['Pole Type'])
+            ground = str(row['Ground?'])
+            
+            conversion_factor = 5280 if (line_type == 'OH Pri. Conductor' and (voltage_level == 36 or voltage_level == 11.5)) else 1000
+
+            total_pos_impedance = z_100MVA * (length / conversion_factor)
+            total_zero_impedance = zo_100MVA * (length / conversion_factor)
+            
+            formatted_pos_impedance = "{:.2f}+{:.2f}j".format(total_pos_impedance.real, total_pos_impedance.imag)
+            formatted_zero_impedance = "{:.2f}+{:.2f}j".format(total_zero_impedance.real, total_zero_impedance.imag)
+
+            self.df_linetrace.at[index, 'Total % Z @ 100 MVA'] = formatted_pos_impedance
+            self.df_linetrace.at[index, 'Total % Zo @ 100 MVA'] = formatted_zero_impedance
+
+            # Update the accumulators
+            self.total_Z_100MVA += total_pos_impedance
+            self.total_Zo_100MVA += total_zero_impedance
+            self.total_length_feet += length
+            self.total_length_miles += length/5280
+
+    def display_info(self):
+        print(self.df_linetrace)
+        print(f"% Z+ Total Line @ 100MVA: {self.total_Z_100MVA.real:.2f}+{self.total_Z_100MVA.imag:.2f}j")
+        print(f"% Z0 Total Line @ 100MVA: {self.total_Zo_100MVA.real:.2f}+{self.total_Zo_100MVA.imag:.2f}j")
+        print(f"Total Length: {self.total_length_feet:.0f} ft - {self.total_length_miles:.3f} mi")
+
+
 
    
 

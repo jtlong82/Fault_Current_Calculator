@@ -145,12 +145,12 @@ def map_impedances(df_linetrace, df_impedance):
         print("Please select one of the available reactor choices, enter a custom reactor, or select 'No Reactor':")
         
         # Print header
-        print(f"{'Choice':<10} {'Type':<20} {'% Z+ @ 100 MVA':<20}")
-        print("="*60)
+        print(f"{'Choice':<10} {'Type':<20} {'Wire Type':<20} {'% Z+ @ 100 MVA':<20}")
+        print("="*80)
 
         # Display predefined reactors
         for idx, (i, f_row) in enumerate(reactor_df.iterrows()):
-            print(f"{idx + 1:<10} {f_row['Type']:<20} {f_row['% Z+ @ 100 MVA']:<20}")
+            print(f"{idx + 1:<10} {f_row['Type']:<20} {f_row['Wire Type']:<20}  {f_row['% Z+ @ 100 MVA']:<20}")
 
         # Custom reactor option
         print(f"{len(reactor_df) + 1:<10} Custom")
@@ -163,28 +163,28 @@ def map_impedances(df_linetrace, df_impedance):
         reactor_record = {
                 'Type': None,
                 '% Z+ @ 100 MVA': None,
-                # ... (initialize other fields as needed)
             }
         
         # Create a new reactor record only if a reactor is selected
         if selection <= len(reactor_df) or selection == len(reactor_df) + 1:
             if selection == len(reactor_df) + 1:  # Custom reactor selected
                 reactor_record['Type'] = input("Enter the custom reactor Type: ")
-                reactor_record['% Z+ @ 100 MVA'] = complex(input("Enter the custom reactor % Z+ @ 100 MVA: "))
+                reactor_record['% Z+ @ 100 MVA'] = complex(input("Enter the custom reactor % Z+ @ 100 MVA: ")) 
                 # Append the new reactor record to df_linetrace
                 df_linetrace = pd.concat([df_linetrace, pd.DataFrame([reactor_record])], ignore_index=True)
             else:  # Predefined reactor selected
                 selected_index = reactor_df.index[selection - 1]
                 reactor_row = reactor_df.loc[selected_index]
                 reactor_record['Type'] = reactor_row['Type']
+                reactor_record['Mapped Wire Type'] = reactor_row['Wire Type']
                 reactor_record['% Z+ @ 100 MVA'] = reactor_row['% Z+ @ 100 MVA']
                 # Append the new reactor record to df_linetrace
                 df_linetrace = pd.concat([df_linetrace, pd.DataFrame([reactor_record])], ignore_index=True)
 
     # KEEP FOR DEBUGGING
-    print("DataFrame: df_linetrace")
-    print(df_linetrace)
-    print('\n')
+    #print("\nDataFrame: df_linetrace")
+    #print(df_linetrace)
+    #print('\n')
 
     return df_linetrace
    
