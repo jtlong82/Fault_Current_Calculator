@@ -3,8 +3,9 @@ import cmath
 import math
 
 class ZLine:
-    def __init__(self, df_linetrace):
+    def __init__(self, df_linetrace, label):
         self.df_linetrace = df_linetrace
+        self.label = label
         self.total_Z_100MVA = 0 
         self.total_Zo_100MVA = 0
         self.total_length_feet = 0
@@ -46,10 +47,14 @@ class ZLine:
             self.total_length_feet += length
             self.total_length_miles += length/5280
 
+            #Convert to Ohms
+            self.total_Z_100MVA_pu = self.total_Z_100MVA / 100
+            self.total_Zo_100MVA_pu = self.total_Zo_100MVA / 100
+
     def display_info(self):
         print(self.df_linetrace)
-        print(f"% Z+ Total Line @ 100MVA: {self.total_Z_100MVA.real:.2f}+{self.total_Z_100MVA.imag:.2f}j")
-        print(f"% Z0 Total Line @ 100MVA: {self.total_Zo_100MVA.real:.2f}+{self.total_Zo_100MVA.imag:.2f}j")
+        print(f"Z+ Total Line: {self.total_Z_100MVA.real:.2f}+{self.total_Z_100MVA.imag:.2f}j %")
+        print(f"Z0 Total Line: {self.total_Zo_100MVA.real:.2f}+{self.total_Zo_100MVA.imag:.2f}j %")
         print(f"Total Length: {self.total_length_feet:.0f} ft - {self.total_length_miles:.3f} mi")
 
 

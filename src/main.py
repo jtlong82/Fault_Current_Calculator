@@ -1,7 +1,7 @@
-from zbusmenu import zbusmenu
+from menus import zbusmenu
 from ZBusClass import ZBus
 from ZLineClass import ZLine
-#from zlinemenu import zlinemenu
+from ZTransClass import ZTrans
 from GetExcel import load_impedance_sheets
 from GetExcel import load_line_trace
 from GetExcel import load_clean_line_imp
@@ -14,6 +14,8 @@ def main():
     bus_dataframes = load_impedance_sheets()
     line_dataframes = load_clean_line_imp()
     zbus_selection = None
+    zline_selection = None
+    ztrans_selection = None
     line_trace = None
 
     while True:
@@ -24,9 +26,10 @@ def main():
             print("Menu Options: ")
         print("1. Select Station/Bus/Transformer(s)")
         print("2. Load Line Trace")
-        print("3. Display Bus Info")
-        print("4. Calculations")
-        print("5. Exit")
+        print("3. Load Transformer")
+        print("4. Display Bus Info")
+        print("5. Calculations")
+        print("6. Exit")
 
         choice = int(input("Select: "))
 
@@ -60,13 +63,17 @@ def main():
                 print("Line trace not selected.")
 
         elif choice == 3:
+            ztrans_selection = ZTrans.menu()
+            print(f"{ztrans_selection.Z_pos_trans:.5f} {ztrans_selection.Zo_trans:.5f}")
+
+        elif choice == 4:
             if zbus_selection is not None:
                 print("\nBus Info:")
                 zbus_selection.display_info()
             else:
                 print("Please select a bus and station/transformer first.")
 
-        elif choice == 4:
+        elif choice == 5:
             if zbus_selection is not None and zline_selection is not None:
                 print("\nFault Calculations:")
                 primary_line_fault_calculation(zbus_selection, zline_selection)
@@ -79,7 +86,7 @@ def main():
             else:
                 print("Please load a line trace.")
             
-        elif choice == 5:
+        elif choice == 6:
             print("Exiting...")
             break
 
