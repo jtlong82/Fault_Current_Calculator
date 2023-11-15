@@ -1,7 +1,4 @@
-from Calcs import locate_primary_line_fault_3ph
-from Calcs import locate_primary_line_fault_l_g 
-from Calcs import locate_primary_line_fault_l_l
-from Calcs import locate_primary_line_fault_l_l_g
+from Calcs import locate_primary_line_fault_3ph, locate_primary_line_fault_l_g, locate_primary_line_fault_l_l, locate_primary_line_fault_l_l_g
 
 def zbusmenu(dataframes):
     # Filter dataframes to only include those with 'Bus' in the sheet name

@@ -1,7 +1,5 @@
 import cmath
 import math
-from ZBusClass import ZBus
-from ZLineClass import ZLine
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,16 +11,18 @@ def primary_line_fault_calculation(ZBus_obj, Zline_obj):
     voltage_level_pu = ZBus_obj.voltage_level_pu
 
     #Getting Zline in pri. ohms
-    Z_pos_line_pohms = Zline_obj.total_Z_100MVA_pu * Zbase
-    Z_pos_line_pohms_mag = abs(Z_pos_line_pohms)
-    Z_pos_angle_rads = cmath.phase(Z_pos_line_pohms)
+    Z_pos_line_pohms_mag = abs(Zline_obj.total_Z_100MVA_pu) * Zbase
+    Z_pos_angle_rads = cmath.phase(Zline_obj.total_Z_100MVA_pu)
     Z_pos_angle_degs = math.degrees(Z_pos_angle_rads)
-    Zo_line_pohms = Zline_obj.total_Zo_100MVA_pu * Zbase
-    Zo_line_pohms_mag = abs(Zo_line_pohms)
-    Zo_angle_rads = cmath.phase(Zo_line_pohms)
+    Zo_line_pohms_mag = abs(Zline_obj.total_Zo_100MVA_pu) * Zbase
+    Zo_angle_rads = cmath.phase(Zline_obj.total_Zo_100MVA_pu)
     Zo_angle_degs = math.degrees(Zo_angle_rads)
 
-    #Getting total Z
+    #Getting line Z%
+    Zpos_per_mag = abs(Zline_obj.total_Z_100MVA)
+    Zo_per_mag = abs(Zline_obj.total_Zo_100MVA)
+
+    #Getting total Zpu
     Zpos_pu = (ZBus_obj.z_100MVA / 100) + (Zline_obj.total_Z_100MVA / 100)
     Zo_pu = (ZBus_obj.zo_100MVA / 100) + (Zline_obj.total_Zo_100MVA /100)
 
@@ -93,9 +93,9 @@ def primary_line_fault_calculation(ZBus_obj, Zline_obj):
     
     #Print to terminal
     print(f"\nLine Impedance: ")
-    print(f"+Z: {Z_pos_line_pohms_mag:.2f}∠{Z_pos_angle_degs:.2f}° Pri. Ohms")
+    print(f"+Z: {Z_pos_line_pohms_mag:.2f}∠{Z_pos_angle_degs:.2f}° Pri. Ohms,    {Zpos_per_mag:.2f}∠{Z_pos_angle_degs:.2f}° %")
     if voltage_level != 4.6:
-        print(f"Z0: {Zo_line_pohms_mag:.2f}∠{Zo_angle_degs:.2f}° Pri. Ohms")
+        print(f"Z0: {Zo_line_pohms_mag:.2f}∠{Zo_angle_degs:.2f}° Pri. Ohms,    {Zo_per_mag:.2f}∠{Zo_angle_degs:.2f}° %")
     print(f"\nX/R Positive Seq: {X_R_pos:.2f}")
     if voltage_level != 4.6:
         print(f"X/R Zero Seq: {X_R_zero:.2f}")
