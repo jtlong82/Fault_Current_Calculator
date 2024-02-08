@@ -41,7 +41,9 @@ def main():
                 zbus_selection = ZBus(zbus_choice)
             else:
                 print("Please load impedance sheets first.")
-
+             
+            ctr = float(input("CT Ratio on line relay (CTR:1): "))
+            ptr = float(input("PT Ratio on line relay (PTR:1): "))
             print("\nLoad Line Trace...")
             line_trace = load_line_trace()
             if line_trace is not None:
@@ -56,7 +58,7 @@ def main():
                     line_dataframes = line_dataframes[first_sheet_name]
 
                 line_trace = map_impedances(line_trace, line_dataframes)
-                zline_selection = ZLine(line_trace, first_sheet_name_trace)
+                zline_selection = ZLine(line_trace, first_sheet_name_trace, ctr, ptr)
                 zline_selection.get_individual_parameters()
 
                 print(f"\nLine trace {first_sheet_name_trace}:")
@@ -80,6 +82,9 @@ def main():
                 zbus_selection = ZBus(zbus_choice)
             else:
                 print("Please load impedance sheets first.")
+            
+            ctr = float(input("CT Ratio on line relay (CTR:1): "))
+            ptr = float(input("PT Ratio on line relay (PTR:1): "))
 
             print("\nLoad Line Trace...")
             line_trace = load_line_trace()
@@ -95,7 +100,7 @@ def main():
                     line_dataframes = line_dataframes[first_sheet_name]
 
                 line_trace = map_impedances(line_trace, line_dataframes)
-                zline_selection = ZLine(line_trace, first_sheet_name_trace)
+                zline_selection = ZLine(line_trace, first_sheet_name_trace, ctr, ptr)
                 zline_selection.get_individual_parameters()
 
                 print(f"\nLine trace {first_sheet_name_trace}:")
@@ -140,7 +145,7 @@ def main():
                     line_dataframes = line_dataframes[first_sheet_name]
 
                 line_trace = map_impedances(line_trace, line_dataframes)
-                zline_selection = ZLine(line_trace, first_sheet_name_trace)
+                zline_selection = ZLine(line_trace, first_sheet_name_trace, 1, 1) #entering 1 for ctr and ptr, not needed in this routine at moment
                 zline_selection.get_individual_parameters()
 
                 print(f"\nLine trace {first_sheet_name_trace}:")

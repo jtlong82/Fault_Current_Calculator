@@ -135,18 +135,38 @@ class ZBus:
             print(f"BCG:")
             print(f"A: {0:.0f}∠{0:.2f}° Amps    B: {self.l_l_g_fault_Bph:.0f}∠{self.l_l_g_fault_pu_ang_degs_Bph:.2f}° Amps    C: {self.l_l_g_fault_Cph:.0f}∠{self.l_l_g_fault_pu_ang_degs_Cph:.2f}° Amps")
 
-
+    def get_station_name():
+        station_names = {
+            'AN-1 & 3': ('Avondale'),
+            'AD-1': ('Admiral'),
+            'DS-1 & 3': ('Dawson'),
+            'GW-1,3 & 4': ('Grovewood'),
+            'HM-2, 3, 4 & 5': ('Hummel'),
+            'IV-2, 3 & 4': ('Ivy'),
+            'JD-1, 2 & 3': ('Jordan'),
+            'LY-2,3 & 4': ('Lloyd'),
+            'MF-1, 2, 3 & 4': ('Mayfield'),
+            'NF-1, 2, 3 & 4': ('Northfield'),
+            'NT-2 & 3': ('Nathan'),
+            'NY-1, 2 & 3': ('Nursery'),
+            'SN-1, 3 & 4': ('Sanborn'),
+            'SP-1': ('Spruce'),
+            'ST-1': ('Stacy'),
+            'ZN-2': ('Zenith')
+        }
 
 
 ####################################################################################################################################################
 class ZLine:
-    def __init__(self, df_linetrace, label):
+    def __init__(self, df_linetrace, label, ctr, ptr):
         self.df_linetrace = df_linetrace
         self.label = label
         self.total_Z_100MVA = 0 
         self.total_Zo_100MVA = 0
         self.total_length_feet = 0
         self.total_length_miles = 0
+        self.ptr = ptr
+        self.ctr = ctr
 
 
     def get_individual_parameters(self):
@@ -229,7 +249,8 @@ class ZTrans:
 
     def display_info(self):
         print(f"\nKVA: {self.transformer_kva}")
-        print(f"Z: {self.x_r_trans}%")
+        print(f"Z: {self.percent_ztrans}%")
+        print(f"X/R: {self.x_r_trans}")
         print(f"Connection: {self.trans_conn}")
         print(f"Secondary Voltage: {self.trans_sec_voltage}")
 

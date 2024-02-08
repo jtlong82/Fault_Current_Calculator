@@ -18,6 +18,10 @@ def primary_line_fault_calculation(ZBus_obj, Zline_obj):
     Zo_angle_rads = cmath.phase(Zline_obj.total_Zo_100MVA_pu)
     Zo_angle_degs = math.degrees(Zo_angle_rads)
 
+    #Getting Zline in sec. ohms
+    Z_pos_line_sohms_mag = Z_pos_line_pohms_mag * (Zline_obj.ctr/Zline_obj.ptr)
+    Zo_line_sohms_mag = Zo_line_pohms_mag * (Zline_obj.ctr/Zline_obj.ptr)
+
     #Getting line Z%
     Zpos_per_mag = abs(Zline_obj.total_Z_100MVA)
     Zo_per_mag = abs(Zline_obj.total_Zo_100MVA)
@@ -93,9 +97,9 @@ def primary_line_fault_calculation(ZBus_obj, Zline_obj):
     
     #Print to terminal
     print(f"\nLine Impedance: ")
-    print(f"+Z: {Z_pos_line_pohms_mag:.2f}∠{Z_pos_angle_degs:.2f}° Pri. Ohms,    {Zpos_per_mag:.2f}∠{Z_pos_angle_degs:.2f}° %")
+    print(f"+Z: {Z_pos_line_pohms_mag:.2f}∠{Z_pos_angle_degs:.2f}° Pri. Ohms,    {Z_pos_line_sohms_mag:.2f}∠{Z_pos_angle_degs:.2f}° Sec. Ohms,    {Zpos_per_mag:.2f}∠{Z_pos_angle_degs:.2f}° %")
     if voltage_level != 4.6:
-        print(f"Z0: {Zo_line_pohms_mag:.2f}∠{Zo_angle_degs:.2f}° Pri. Ohms,    {Zo_per_mag:.2f}∠{Zo_angle_degs:.2f}° %")
+        print(f"Z0: {Zo_line_pohms_mag:.2f}∠{Zo_angle_degs:.2f}° Pri. Ohms,    {Zo_line_sohms_mag:.2f}∠{Zo_angle_degs:.2f}° Sec. Ohms,    {Zo_per_mag:.2f}∠{Zo_angle_degs:.2f}° %")
     print(f"\nX/R Positive Seq: {X_R_pos:.2f}")
     if voltage_level != 4.6:
         print(f"X/R Zero Seq: {X_R_zero:.2f}")
@@ -122,21 +126,44 @@ def primary_line_fault_calculation(ZBus_obj, Zline_obj):
 
 def sec_trans_fault_calculation(ZBus_obj, Zline_obj, Ztrans_obj):
     MVA_base = ZBus_obj.MVA_base 
+    Zbase = ZBus_obj.Zbase
+    voltage_level = ZBus_obj.voltage_level
     voltage_level_pu = ZBus_obj.voltage_level_pu
     Ibase = MVA_base / (Ztrans_obj.trans_sec_voltage * (3 ** 0.5))
 
-    #Getting total Z
+    #Getting total Z of bus, line and TR
     Zpos_pu = (ZBus_obj.z_100MVA / 100) + (Zline_obj.total_Z_100MVA / 100) + (Ztrans_obj.Z_pos_trans / 100)
 
     if Ztrans_obj.trans_conn == 'Δ-Yg': 
         Zo_pu = 2 * ((ZBus_obj.z_100MVA / 100) + (Zline_obj.total_Z_100MVA / 100)) + (3 * (Ztrans_obj.Z_pos_trans / 100))
-
     elif Ztrans_obj.trans_conn == 'Yg-Yg': 
         Zo_pu = 2 * ((ZBus_obj.z_100MVA / 100) + (Zline_obj.total_Z_100MVA / 100)) + (ZBus_obj.zo_100MVA / 100) + (Zline_obj.total_Zo_100MVA / 100) + (3 * (Ztrans_obj.Z_pos_trans / 100))
     else:
         Zo_pu = 0 + 0j
 
     X_R_pos = Zpos_pu.imag  / Zpos_pu.real
+
+    #Getting total Z of line and TR for distance relaying and calculating impedances
+    Zpos_lt_pu = (Zline_obj.total_Z_100MVA / 100) + (Ztrans_obj.Z_pos_trans / 100)
+
+    if Ztrans_obj.trans_conn == 'Δ-Yg': 
+        Zo_lt_pu = 2 * (Zline_obj.total_Z_100MVA / 100) + (3 * (Ztrans_obj.Z_pos_trans / 100))
+    elif Ztrans_obj.trans_conn == 'Yg-Yg': 
+        Zo_lt_pu = 2 * (Zline_obj.total_Z_100MVA / 100) + (Zline_obj.total_Zo_100MVA / 100) + (3 * (Ztrans_obj.Z_pos_trans / 100))
+    else:
+        Zo_lt_pu = 0 + 0j
+
+    #In pri. ohms
+    Zpos_lt_pohms_mag = abs(Zpos_lt_pu) * Zbase
+    Zpos_lt_angle_rads = cmath.phase(Zpos_lt_pu)
+    Zpos_lt_angle_degs = math.degrees(Zpos_lt_angle_rads)
+    Zo_lt_pohms_mag = abs(Zo_lt_pu) * Zbase
+    Zo_lt_angle_rads = cmath.phase(Zo_lt_pu)
+    Zo_lt_angle_degs = math.degrees(Zo_lt_angle_rads)
+
+    #In sec. ohms
+    Zpos_lt_sohms_mag = Zpos_lt_pohms_mag * (Zline_obj.ctr/Zline_obj.ptr)
+    Zo_lt_sohms_mag = Zo_lt_pohms_mag * (Zline_obj.ctr/Zline_obj.ptr)
 
     #3-ph fault
     three_ph_fault_pu = voltage_level_pu / (Zpos_pu)
@@ -208,6 +235,11 @@ def sec_trans_fault_calculation(ZBus_obj, Zline_obj, Ztrans_obj):
         l_l_g_fault_pri_side = l_l_g_fault_Bph * (Ztrans_obj.trans_sec_voltage/ZBus_obj.voltage_level)
     
     #Print to terminal
+    print(f"\nLine + Transformer Impedances (used for distance calculations): ")
+    print(f"+Z: {Zpos_lt_pohms_mag:.2f}∠{Zpos_lt_angle_degs:.2f}° Pri. Ohms,   +Z: {Zpos_lt_sohms_mag:.2f}∠{Zpos_lt_angle_degs:.2f}° Sec. Ohms")
+    if voltage_level != 4.6:
+        print(f"Z0: {Zo_lt_pohms_mag:.2f}∠{Zo_lt_angle_degs:.2f}° Pri. Ohms,   +Z: {Zo_lt_sohms_mag:.2f}∠{Zo_lt_angle_degs:.2f}° Sec. Ohms")
+
     print(f"\nX/R Positive Seq at secondary of transformer: {X_R_pos:.2f}")
     if Ztrans_obj.trans_conn == 'Δ-Yg' or Ztrans_obj.trans_conn == 'Yg-Yg':
         print(f"X/R Zero Seq on secondary of transformer: {X_R_zero:.2f}")
