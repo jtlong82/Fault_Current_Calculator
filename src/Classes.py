@@ -99,42 +99,61 @@ class ZBus:
             self.l_l_g_fault_pu_ang_rads_Cph = cmath.phase(self.l_l_g_fault_Cph_pu)
             self.l_l_g_fault_pu_ang_degs_Cph = math.degrees(self.l_l_g_fault_pu_ang_rads_Cph)
         
-    def display_info(self):
-        print(f"Station: {self.station}")
-        print(f"Voltage: {self.voltage_level} kV")
-        print(f"Supplied from (System): {self.supplied_from} ")
-        print(f"Transformer(s): {self.transformer_kva} kVA")
-        print(f"Tap Ratio: {self.tap_ratio} kV")
-        print(f"% Z @ 100MVA: {self.z_100MVA}")
+    def display_info(self, buffer):
+        buffer.append(f"Station: {self.station}\n")
+        buffer.append(f"Voltage: {self.voltage_level} kV\n")
+        buffer.append(f"Supplied from (System): {self.supplied_from}\n")
+        buffer.append(f"Transformer(s): {self.transformer_kva} kVA\n")
+        buffer.append(f"Tap Ratio: {self.tap_ratio} kV\n")
+        buffer.append(f"% Z @ 100MVA: {self.z_100MVA}\n")
         # print(f"D e @ 120 V: {self.d_e_120V:.2f}")
         # print(f"3-Phase Short Circuit MVA: {self.short_circuit_MVA_1:.2f}")
         if self.voltage_level != 4.6:
-            print(f"% Zo @ 100MVA: {self.zo_100MVA}")
+            buffer.append(f"% Zo @ 100MVA: {self.zo_100MVA}\n")
             # print(f"% Z (L_G) @ 100MVA: {self.z_L_G_100MVA}")
             # print(f"L_G Short Circuit MVA: {self.short_circuit_MVA_2:.2f}")
-        print(f"X/R Positive Seq at Bus: {self.X_R_pos:.2f}")
+        buffer.append(f"X/R Positive Seq at Bus: {self.X_R_pos:.2f}\n")
         if self.voltage_level != 4.6:
-            print(f"X/R Zero Seq at Bus: {self.X_R_zero:.2f}")
-        print("\nAvailable fault currents at Bus: ")
-        print(f"ABC: {self.three_ph_fault:.0f}∠{self.three_ph_fault_pu_ang_degs:.2f}° Amps")
-        if self.voltage_level != 4.6:
-            print(f"AG: {self.l_g_fault:.0f}∠{self.l_g_fault_pu_ang_degs:.2f}° Amps")
-        print(f"BC: {self.l_l_fault:.0f}∠{self.l_l_fault_pu_ang_degs:.2f}° Amps")
-        if self.voltage_level != 4.6:
-            print(f"BCG: {self.l_l_g_fault_Bph:.0f}∠{self.l_l_g_fault_pu_ang_degs_Bph :.2f}° Amps")
+            buffer.append(f"X/R Zero Seq at Bus: {self.X_R_zero:.2f}\n")
 
-        print("\nAvailable fault currents at Bus per phase: ")
-        print(f"ABC:")
-        print(f"A: {self.three_ph_fault_Aph:.0f}∠{self.three_ph_fault_pu_ang_degs_Aph:.2f}° Amps    B: {self.three_ph_fault_Bph:.0f}∠{self.three_ph_fault_pu_ang_degs_Bph:.2f}° Amps    C: {self.three_ph_fault_Cph:.0f}∠{self.three_ph_fault_pu_ang_degs_Cph:.2f}° Amps")
-        if self.voltage_level != 4.6:
-            print(f"AG:")
-            print(f"A: {self.l_g_fault:.0f}∠{self.l_g_fault_pu_ang_degs:.2f}° Amps    B: {0:.0f}∠{0:.2f}° Amps    C: {0:.0f}∠{0:.2f}° Amps")
-        print(f"BC:")
-        print(f"A: {0:.0f}∠{0:.2f}° Amps    B: {self.l_l_fault_Bph:.0f}∠{self.l_l_fault_pu_ang_degs_Bph:.2f}° Amps    C: {self.l_l_fault_Cph:.0f}∠{self.l_l_fault_pu_ang_degs_Cph:.2f}° Amps")
-        if self.voltage_level != 4.6:
-            print(f"BCG:")
-            print(f"A: {0:.0f}∠{0:.2f}° Amps    B: {self.l_l_g_fault_Bph:.0f}∠{self.l_l_g_fault_pu_ang_degs_Bph:.2f}° Amps    C: {self.l_l_g_fault_Cph:.0f}∠{self.l_l_g_fault_pu_ang_degs_Cph:.2f}° Amps")
+        #Print faults to buffer in alignment
+        line_format = "{:<4} {:>15} {:>4} {:>15} {:>4} {:>15} {:>4} {:>15}"
+        buffer.append(f"\nAvailable bus fault currents at {self.station}: \n")
 
+        #Print formatted abc fault to buffer
+        abc_fault = f"{self.three_ph_fault:.0f}∠{self.three_ph_fault_pu_ang_degs:.2f}°A"
+        a_phase_fault = f"{self.three_ph_fault_Aph:.0f}∠{self.three_ph_fault_pu_ang_degs_Aph:.2f}°A"
+        b_phase_fault = f"{self.three_ph_fault_Bph:.0f}∠{self.three_ph_fault_pu_ang_degs_Bph:.2f}°A"
+        c_phase_fault = f"{self.three_ph_fault_Cph:.0f}∠{self.three_ph_fault_pu_ang_degs_Cph:.2f}°A"
+        output_line = line_format.format("ABC:", abc_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+        buffer.append(output_line + "\n")
+    
+        #Print formatted AG fault to buffer
+        if self.voltage_level != 4.6:
+            ag_fault = f"{self.l_g_fault:.0f}∠{self.l_g_fault_pu_ang_degs:.2f}°A"
+            a_phase_fault = f"{self.l_g_fault:.0f}∠{self.l_g_fault_pu_ang_degs:.2f}°A"
+            b_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+            c_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+            output_line = line_format.format("AG:", ag_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+            buffer.append(output_line + "\n")
+        
+        #Print formatted BC fault to buffer
+        bc_fault = f"{self.l_l_fault:.0f}∠{self.l_l_fault_pu_ang_degs:.2f}°A"
+        a_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+        b_phase_fault = f"{self.l_l_fault_Bph:.0f}∠{self.l_l_fault_pu_ang_degs_Bph:.2f}°A"
+        c_phase_fault = f"{self.l_l_fault_Cph:.0f}∠{self.l_l_fault_pu_ang_degs_Cph:.2f}°A"
+        output_line = line_format.format("BC:", bc_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+        buffer.append(output_line + "\n")    
+    
+        #Print formatted BCG fault to buffer
+        if self.voltage_level != 4.6:
+            bcg_fault = f"{self.l_l_g_fault_Bph:.0f}∠{self.l_l_g_fault_pu_ang_degs_Bph:.2f}°A"
+            a_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+            b_phase_fault = f"{self.l_l_g_fault_Bph:.0f}∠{self.l_l_g_fault_pu_ang_degs_Bph:.2f}°A"
+            c_phase_fault = f"{self.l_l_g_fault_Cph:.0f}∠{self.l_l_g_fault_pu_ang_degs_Cph:.2f}°A"
+            output_line = line_format.format("BCG:", bcg_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+            buffer.append(output_line + "\n") 
+        
     def get_station_name():
         station_names = {
             'AN-1 & 3': ('Avondale'),
@@ -208,13 +227,11 @@ class ZLine:
             self.total_Z_100MVA_pu = self.total_Z_100MVA / 100
             self.total_Zo_100MVA_pu = self.total_Zo_100MVA / 100
 
-    def display_info(self):
-        print(self.df_linetrace)
-        print(f"Z+ Total Line: {self.total_Z_100MVA.real:.2f}+{self.total_Z_100MVA.imag:.2f}j %")
-        print(f"Z0 Total Line: {self.total_Zo_100MVA.real:.2f}+{self.total_Zo_100MVA.imag:.2f}j %")
-        print(f"Total Length: {self.total_length_feet:.0f} ft - {self.total_length_miles:.3f} mi")
-
-
+    def display_info(self, buffer):
+        buffer.append(f"{self.df_linetrace}\n")
+        buffer.append(f"Z+ Total Line: {self.total_Z_100MVA.real:.2f}+{self.total_Z_100MVA.imag:.2f}j%\n")
+        buffer.append(f"Z0 Total Line: {self.total_Zo_100MVA.real:.2f}+{self.total_Zo_100MVA.imag:.2f}j%\n")
+        buffer.append(f"Total Length: {self.total_length_feet:.0f} ft - {self.total_length_miles:.3f} mi\n")
 
 ####################################################################################################################################################
 class ZTrans:
@@ -247,12 +264,13 @@ class ZTrans:
         self.Z_pos_trans = complex(self.percent_ztrans * (100 / self.transformer_mva) * math.cos(theta_rads), self.percent_ztrans * (100 / self.transformer_mva) * math.sin(theta_rads))
         self.Zo_trans = self.Z_pos_trans
 
-    def display_info(self):
-        print(f"\nKVA: {self.transformer_kva}")
-        print(f"Z: {self.percent_ztrans}%")
-        print(f"X/R: {self.x_r_trans}")
-        print(f"Connection: {self.trans_conn}")
-        print(f"Secondary Voltage: {self.trans_sec_voltage}")
+    def display_info(self, buffer):
+        buffer.append(f"\nKVA: {self.transformer_kva}\n")
+        buffer.append(f"Z: {self.percent_ztrans}%\n")
+        buffer.append(f"X/R: {self.x_r_trans}\n")
+        buffer.append(f"Connection: {self.trans_conn}\n")
+        buffer.append(f"Secondary Voltage: {self.trans_sec_voltage}\n")
+        buffer.append(f"Z+: {self.Z_pos_trans:.2f}%, Z0: {self.Zo_trans:.2f}%\n")
 
     @staticmethod
     def select_connection_type():

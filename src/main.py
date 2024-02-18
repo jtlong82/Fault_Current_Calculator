@@ -3,6 +3,7 @@ from Classes import ZBus, ZLine, ZTrans
 from GetExcel import load_impedance_sheets, load_line_trace, load_clean_line_imp
 from CleanLineTrace import map_impedances
 from Calcs import primary_line_fault_calculation, locate_primary_line_fault_l_g, sec_trans_fault_calculation
+from savetxt import savetxt
 
 def main():
     # Load impedance sheets and clean dataframes
@@ -12,6 +13,7 @@ def main():
     zline_selection = None
     ztrans_selection = None
     line_trace = None
+    buffer = [] #collect data to write to terminal and file at end of calculations
 
     print("\nMenu Options: ")
 
@@ -28,17 +30,22 @@ def main():
         choice = int(input("Select: "))
 
         if choice == 1:
+            buffer = []
             if bus_dataframes is not None:
                 zbus_choice = zbusmenu(bus_dataframes)
                 zbus_selection = ZBus(zbus_choice)
-                zbus_selection.display_info()
+                zbus_selection.display_info(buffer)
+                print("".join(buffer))
+                savetxt(buffer)
             else:
                 print("Please load impedance sheets first.")
                 
         elif choice == 2:
+            buffer = []
             if bus_dataframes is not None:
                 zbus_choice = zbusmenu(bus_dataframes)
                 zbus_selection = ZBus(zbus_choice)
+                zbus_selection.display_info(buffer)
             else:
                 print("Please load impedance sheets first.")
              
@@ -60,32 +67,32 @@ def main():
                 line_trace = map_impedances(line_trace, line_dataframes)
                 zline_selection = ZLine(line_trace, first_sheet_name_trace, ctr, ptr)
                 zline_selection.get_individual_parameters()
-
-                print(f"\nLine trace {first_sheet_name_trace}:")
-                zline_selection.display_info()
+                buffer.append(f"\nLine trace {first_sheet_name_trace}:\n")
+                zline_selection.display_info(buffer)
 
                 if zbus_selection is not None and zline_selection is not None:
-                    print(f"\n{first_sheet_name_trace}:")
-                    primary_line_fault_calculation(zbus_selection, zline_selection)
-
+                    buffer.append(f"CT ratio: {ctr}:1   PT Ratio: {ptr}:1\n")
+                    primary_line_fault_calculation(zbus_selection, zline_selection, buffer)
+                    print("".join(buffer))
+                    savetxt(buffer)
                 elif zbus_selection is None:
                     print("Please select a bus and station/transformer.")
                 else:
                     print("Please load a line trace.")
-
             else:
                 print("Line trace not selected.")
 
         elif choice == 3:
+            buffer = []
             if bus_dataframes is not None:
                 zbus_choice = zbusmenu(bus_dataframes)
                 zbus_selection = ZBus(zbus_choice)
+                zbus_selection.display_info(buffer)
             else:
                 print("Please load impedance sheets first.")
             
             ctr = float(input("CT Ratio on line relay (CTR:1): "))
             ptr = float(input("PT Ratio on line relay (PTR:1): "))
-
             print("\nLoad Line Trace...")
             line_trace = load_line_trace()
             if line_trace is not None:
@@ -102,27 +109,25 @@ def main():
                 line_trace = map_impedances(line_trace, line_dataframes)
                 zline_selection = ZLine(line_trace, first_sheet_name_trace, ctr, ptr)
                 zline_selection.get_individual_parameters()
-
-                print(f"\nLine trace {first_sheet_name_trace}:")
-                zline_selection.display_info()
+                buffer.append(f"\nLine trace {first_sheet_name_trace}:\n")
+                zline_selection.display_info(buffer)
 
                 if zbus_selection is not None and zline_selection is not None:
                     print(f"\n{first_sheet_name_trace}:")
-                    primary_line_fault_calculation(zbus_selection, zline_selection)
+                    primary_line_fault_calculation(zbus_selection, zline_selection, buffer)
 
                 elif zbus_selection is None:
                     print("Please select a bus and station/transformer.")
                 else:
                     print("Please load a line trace.")
-
             else:
                 print("Line trace not selected.")
 
             ztrans_selection = ZTrans.menu()
-            ztrans_selection.display_info()
-            print(f"+Z: {ztrans_selection.Z_pos_trans:.2f}%, Z0: {ztrans_selection.Zo_trans:.2f}%")
-
-            sec_trans_fault_calculation(zbus_selection, zline_selection, ztrans_selection)
+            ztrans_selection.display_info(buffer)
+            sec_trans_fault_calculation(zbus_selection, zline_selection, ztrans_selection, buffer)
+            print("".join(buffer))
+            savetxt(buffer)
 
         elif choice == 4:
             if bus_dataframes is not None:

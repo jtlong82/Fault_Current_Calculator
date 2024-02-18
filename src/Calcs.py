@@ -3,7 +3,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-def primary_line_fault_calculation(ZBus_obj, Zline_obj):
+def primary_line_fault_calculation(ZBus_obj, Zline_obj, buffer):
     MVA_base = ZBus_obj.MVA_base
     Zbase = ZBus_obj.Zbase 
     Ibase = ZBus_obj.Ibase
@@ -95,36 +95,56 @@ def primary_line_fault_calculation(ZBus_obj, Zline_obj):
         l_l_g_fault_pu_ang_rads_Cph = cmath.phase(l_l_g_fault_Cph_pu)
         l_l_g_fault_pu_ang_degs_Cph = math.degrees(l_l_g_fault_pu_ang_rads_Cph)
     
-    #Print to terminal
-    print(f"\nLine Impedance: ")
-    print(f"+Z: {Z_pos_line_pohms_mag:.2f}∠{Z_pos_angle_degs:.2f}° Pri. Ohms,    {Z_pos_line_sohms_mag:.2f}∠{Z_pos_angle_degs:.2f}° Sec. Ohms,    {Zpos_per_mag:.2f}∠{Z_pos_angle_degs:.2f}° %")
+    #Print to buffer
+    buffer.append(f"\nLine Impedance: \n")
+    buffer.append(f"Z+: {Z_pos_line_pohms_mag:.2f}∠{Z_pos_angle_degs:.2f}° Pri. Ohms,    {Z_pos_line_sohms_mag:.2f}∠{Z_pos_angle_degs:.2f}° Sec. Ohms,    {Zpos_per_mag:.2f}∠{Z_pos_angle_degs:.2f}° %\n")
     if voltage_level != 4.6:
-        print(f"Z0: {Zo_line_pohms_mag:.2f}∠{Zo_angle_degs:.2f}° Pri. Ohms,    {Zo_line_sohms_mag:.2f}∠{Zo_angle_degs:.2f}° Sec. Ohms,    {Zo_per_mag:.2f}∠{Zo_angle_degs:.2f}° %")
-    print(f"\nX/R Positive Seq: {X_R_pos:.2f}")
+        buffer.append(f"Z0: {Zo_line_pohms_mag:.2f}∠{Zo_angle_degs:.2f}° Pri. Ohms,    {Zo_line_sohms_mag:.2f}∠{Zo_angle_degs:.2f}° Sec. Ohms,    {Zo_per_mag:.2f}∠{Zo_angle_degs:.2f}° %\n")
+    buffer.append(f"\nX/R Positive Seq: {X_R_pos:.2f}\n")
     if voltage_level != 4.6:
-        print(f"X/R Zero Seq: {X_R_zero:.2f}")
-    print(f"\nAvailable fault currents at {Zline_obj.label}: ")
-    print(f"ABC: {three_ph_fault:.0f}∠{three_ph_fault_pu_ang_degs:.2f}° Amps")
-    if voltage_level != 4.6:
-        print(f"AG: {l_g_fault:.0f}∠{l_g_fault_pu_ang_degs:.2f}° Amps")
-    print(f"BC: {l_l_fault:.0f}∠{l_l_fault_pu_ang_degs:.2f}° Amps")
-    if voltage_level != 4.6:
-        print(f"BCG: {l_l_g_fault_Bph:.0f}∠{l_l_g_fault_pu_ang_degs_Bph :.2f}° Amps")
+        buffer.append(f"X/R Zero Seq: {X_R_zero:.2f}\n")
+    
+    #Print faults to buffer in alignment
+    line_format = "{:<4} {:>15} {:>4} {:>15} {:>4} {:>15} {:>4} {:>15}"
+    buffer.append(f"\nAvailable fault currents at {Zline_obj.label}: \n")
 
-    print(f"\nABC:")
-    print(f"A: {three_ph_fault_Aph:.0f}∠{three_ph_fault_pu_ang_degs_Aph:.2f}° Amps    B: {three_ph_fault_Bph:.0f}∠{three_ph_fault_pu_ang_degs_Bph:.2f}° Amps    C: {three_ph_fault_Cph:.0f}∠{three_ph_fault_pu_ang_degs_Cph:.2f}° Amps")
+    #Print formatted abc fault to buffer
+    abc_fault = f"{three_ph_fault:.0f}∠{three_ph_fault_pu_ang_degs:.2f}°A"
+    a_phase_fault = f"{three_ph_fault_Aph:.0f}∠{three_ph_fault_pu_ang_degs_Aph:.2f}°A"
+    b_phase_fault = f"{three_ph_fault_Bph:.0f}∠{three_ph_fault_pu_ang_degs_Bph:.2f}°A"
+    c_phase_fault = f"{three_ph_fault_Cph:.0f}∠{three_ph_fault_pu_ang_degs_Cph:.2f}°A"
+    output_line = line_format.format("ABC:", abc_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+    buffer.append(output_line + "\n")
+    
+    #Print formatted AG fault to buffer
     if voltage_level != 4.6:
-        print(f"AG:")
-        print(f"A: {l_g_fault:.0f}∠{l_g_fault_pu_ang_degs:.2f}° Amps    B: {0:.0f}∠{0:.2f}° Amps    C: {0:.0f}∠{0:.2f}° Amps")
-    print(f"BC:")
-    print(f"A: {0:.0f}∠{0:.2f}° Amps    B: {l_l_fault_Bph:.0f}∠{l_l_fault_pu_ang_degs_Bph:.2f}° Amps    C: {l_l_fault_Cph:.0f}∠{l_l_fault_pu_ang_degs_Cph:.2f}° Amps")
+        ag_fault = f"{l_g_fault:.0f}∠{l_g_fault_pu_ang_degs:.2f}°A"
+        a_phase_fault = f"{l_g_fault:.0f}∠{l_g_fault_pu_ang_degs:.2f}°A"
+        b_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+        c_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+        output_line = line_format.format("AG:", ag_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+        buffer.append(output_line + "\n")
+        
+    #Print formatted BC fault to buffer
+    bc_fault = f"{l_l_fault:.0f}∠{l_l_fault_pu_ang_degs:.2f}°A"
+    a_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+    b_phase_fault = f"{l_l_fault_Bph:.0f}∠{l_l_fault_pu_ang_degs_Bph:.2f}°A"
+    c_phase_fault = f"{l_l_fault_Cph:.0f}∠{l_l_fault_pu_ang_degs_Cph:.2f}°A"
+    output_line = line_format.format("BC:", bc_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+    buffer.append(output_line + "\n")    
+    
+    #Print formatted BCG fault to buffer
     if voltage_level != 4.6:
-        print(f"BCG:")
-        print(f"A: {0:.0f}∠{0:.2f}° Amps    B: {l_l_g_fault_Bph:.0f}∠{l_l_g_fault_pu_ang_degs_Bph:.2f}° Amps    C: {l_l_g_fault_Cph:.0f}∠{l_l_g_fault_pu_ang_degs_Cph:.2f}° Amps")
-
+        bcg_fault = f"{l_l_g_fault_Bph:.0f}∠{l_l_g_fault_pu_ang_degs_Bph:.2f}°A"
+        a_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+        b_phase_fault = f"{l_l_g_fault_Bph:.0f}∠{l_l_g_fault_pu_ang_degs_Bph:.2f}°A"
+        c_phase_fault = f"{l_l_g_fault_Cph:.0f}∠{l_l_g_fault_pu_ang_degs_Cph:.2f}°A"
+        output_line = line_format.format("BCG:", bcg_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+        buffer.append(output_line + "\n") 
+        
     return
 
-def sec_trans_fault_calculation(ZBus_obj, Zline_obj, Ztrans_obj):
+def sec_trans_fault_calculation(ZBus_obj, Zline_obj, Ztrans_obj, buffer):
     MVA_base = ZBus_obj.MVA_base 
     Zbase = ZBus_obj.Zbase
     voltage_level = ZBus_obj.voltage_level
@@ -234,41 +254,60 @@ def sec_trans_fault_calculation(ZBus_obj, Zline_obj, Ztrans_obj):
         l_l_g_fault_pu_ang_degs_Cph = math.degrees(l_l_g_fault_pu_ang_rads_Cph)
         l_l_g_fault_pri_side = l_l_g_fault_Bph * (Ztrans_obj.trans_sec_voltage/ZBus_obj.voltage_level)
     
-    #Print to terminal
-    print(f"\nLine + Transformer Impedances (used for distance calculations): ")
-    print(f"+Z: {Zpos_lt_pohms_mag:.2f}∠{Zpos_lt_angle_degs:.2f}° Pri. Ohms,   +Z: {Zpos_lt_sohms_mag:.2f}∠{Zpos_lt_angle_degs:.2f}° Sec. Ohms")
+    #Print to buffer
+    buffer.append(f"\nLine + Transformer Impedances (used for distance calculations): \n")
+    buffer.append(f"+Z: {Zpos_lt_pohms_mag:.2f}∠{Zpos_lt_angle_degs:.2f}° Pri. Ohms,   +Z: {Zpos_lt_sohms_mag:.2f}∠{Zpos_lt_angle_degs:.2f}° Sec. Ohms\n")
     if voltage_level != 4.6:
-        print(f"Z0: {Zo_lt_pohms_mag:.2f}∠{Zo_lt_angle_degs:.2f}° Pri. Ohms,   +Z: {Zo_lt_sohms_mag:.2f}∠{Zo_lt_angle_degs:.2f}° Sec. Ohms")
+        buffer.append(f"Z0: {Zo_lt_pohms_mag:.2f}∠{Zo_lt_angle_degs:.2f}° Pri. Ohms,   +Z: {Zo_lt_sohms_mag:.2f}∠{Zo_lt_angle_degs:.2f}° Sec. Ohms\n")
 
-    print(f"\nX/R Positive Seq at secondary of transformer: {X_R_pos:.2f}")
+    buffer.append(f"\nX/R Positive Seq at secondary of transformer: {X_R_pos:.2f}\n")
     if Ztrans_obj.trans_conn == 'Δ-Yg' or Ztrans_obj.trans_conn == 'Yg-Yg':
-        print(f"X/R Zero Seq on secondary of transformer: {X_R_zero:.2f}")
-    print(f"\nAvailable fault currents at secondary of transformer: ")
-    print(f"ABC: {three_ph_fault:.0f}∠{three_ph_fault_pu_ang_degs:.2f}° Amps")
-    if Ztrans_obj.trans_conn == 'Δ-Yg' or Ztrans_obj.trans_conn == 'Yg-Yg':
-        print(f"AG: {l_g_fault:.0f}∠{l_g_fault_pu_ang_degs:.2f}° Amps")
-    print(f"BC: {l_l_fault:.0f}∠{l_l_fault_pu_ang_degs:.2f}° Amps")
-    if Ztrans_obj.trans_conn == 'Δ-Yg' or Ztrans_obj.trans_conn == 'Yg-Yg':
-        print(f"BCG: {l_l_g_fault_Bph:.0f}∠{l_l_g_fault_pu_ang_degs_Bph :.2f}° Amps")
+        buffer.append(f"X/R Zero Seq on secondary of transformer: {X_R_zero:.2f}\n")
+    #Print faults to buffer in alignment
+    line_format = "{:<4} {:>15} {:>4} {:>15} {:>4} {:>15} {:>4} {:>15}"
+    buffer.append(f"\nAvailable fault currents at secondary of transformer: \n")
 
-    print(f"\nSecondary Fault Magnitudes as seen by transformer high side: ")
-    print(f"ABC: {three_ph_fault_pri_side:.0f} Amps")
+    #Print formatted abc fault to buffer
+    abc_fault = f"{three_ph_fault:.0f}∠{three_ph_fault_pu_ang_degs:.2f}°A"
+    a_phase_fault = f"{three_ph_fault_Aph:.0f}∠{three_ph_fault_pu_ang_degs_Aph:.2f}°A"
+    b_phase_fault = f"{three_ph_fault_Bph:.0f}∠{three_ph_fault_pu_ang_degs_Bph:.2f}°A"
+    c_phase_fault = f"{three_ph_fault_Cph:.0f}∠{three_ph_fault_pu_ang_degs_Cph:.2f}°A"
+    output_line = line_format.format("ABC:", abc_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+    buffer.append(output_line + "\n")
+    
+    #Print formatted AG fault to buffer
     if Ztrans_obj.trans_conn == 'Δ-Yg' or Ztrans_obj.trans_conn == 'Yg-Yg':
-        print(f"AG: {l_g_fault_pri_side:.0f} Amps")
-    print(f"BC: {l_l_fault_pri_side:.0f} Amps")
+        ag_fault = f"{l_g_fault:.0f}∠{l_g_fault_pu_ang_degs:.2f}°A"
+        a_phase_fault = f"{l_g_fault:.0f}∠{l_g_fault_pu_ang_degs:.2f}°A"
+        b_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+        c_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+        output_line = line_format.format("AG:", ag_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+        buffer.append(output_line + "\n")
+        
+    #Print formatted BC fault to buffer
+    bc_fault = f"{l_l_fault:.0f}∠{l_l_fault_pu_ang_degs:.2f}°A"
+    a_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+    b_phase_fault = f"{l_l_fault_Bph:.0f}∠{l_l_fault_pu_ang_degs_Bph:.2f}°A"
+    c_phase_fault = f"{l_l_fault_Cph:.0f}∠{l_l_fault_pu_ang_degs_Cph:.2f}°A"
+    output_line = line_format.format("BC:", bc_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+    buffer.append(output_line + "\n")    
+    
+    #Print formatted BCG fault to buffer
     if Ztrans_obj.trans_conn == 'Δ-Yg' or Ztrans_obj.trans_conn == 'Yg-Yg':
-        print(f"BCG: {l_l_g_fault_pri_side:.0f} Amps")
+        bcg_fault = f"{l_l_g_fault_Bph:.0f}∠{l_l_g_fault_pu_ang_degs_Bph:.2f}°A"
+        a_phase_fault = f"{0:.0f}∠{0:.2f}°A"
+        b_phase_fault = f"{l_l_g_fault_Bph:.0f}∠{l_l_g_fault_pu_ang_degs_Bph:.2f}°A"
+        c_phase_fault = f"{l_l_g_fault_Cph:.0f}∠{l_l_g_fault_pu_ang_degs_Cph:.2f}°A"
+        output_line = line_format.format("BCG:", bcg_fault, "A:", a_phase_fault, "B:", b_phase_fault, "C:", c_phase_fault)
+        buffer.append(output_line + "\n")
 
-    print(f"\nABC:")
-    print(f"A: {three_ph_fault_Aph:.0f}∠{three_ph_fault_pu_ang_degs_Aph:.2f}° Amps    B: {three_ph_fault_Bph:.0f}∠{three_ph_fault_pu_ang_degs_Bph:.2f}° Amps    C: {three_ph_fault_Cph:.0f}∠{three_ph_fault_pu_ang_degs_Cph:.2f}° Amps")
+    buffer.append(f"\nTR Secondary fault magnitudes as seen by transformer high side: \n")
+    buffer.append(f"ABC: {three_ph_fault_pri_side:.0f}A\n")
     if Ztrans_obj.trans_conn == 'Δ-Yg' or Ztrans_obj.trans_conn == 'Yg-Yg':
-        print(f"AG:")
-        print(f"A: {l_g_fault:.0f}∠{l_g_fault_pu_ang_degs:.2f}° Amps    B: {0:.0f}∠{0:.2f}° Amps    C: {0:.0f}∠{0:.2f}° Amps")
-    print(f"BC:")
-    print(f"A: {0:.0f}∠{0:.2f}° Amps    B: {l_l_fault_Bph:.0f}∠{l_l_fault_pu_ang_degs_Bph:.2f}° Amps    C: {l_l_fault_Cph:.0f}∠{l_l_fault_pu_ang_degs_Cph:.2f}° Amps")
+        buffer.append(f"AG: {l_g_fault_pri_side:.0f}A\n")
+    buffer.append(f"BC: {l_l_fault_pri_side:.0f}A\n")
     if Ztrans_obj.trans_conn == 'Δ-Yg' or Ztrans_obj.trans_conn == 'Yg-Yg':
-        print(f"BCG:")
-        print(f"A: {0:.0f}∠{0:.2f}° Amps    B: {l_l_g_fault_Bph:.0f}∠{l_l_g_fault_pu_ang_degs_Bph:.2f}° Amps    C: {l_l_g_fault_Cph:.0f}∠{l_l_g_fault_pu_ang_degs_Cph:.2f}° Amps")
+        buffer.append(f"BCG: {l_l_g_fault_pri_side:.0f}A\n")
 
     return
     

@@ -2,6 +2,8 @@ from docx import Document
 from docx.shared import Inches
 from datetime import datetime
 
+
+
 def cust_form_letter(template_path, output_path, data):
     doc = Document(template_path)
     for paragraph in doc.paragraphs:
