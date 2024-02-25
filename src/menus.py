@@ -1,4 +1,6 @@
 from Calcs import locate_primary_line_fault_3ph, locate_primary_line_fault_l_g, locate_primary_line_fault_l_l, locate_primary_line_fault_l_l_g
+import tkinter as tk
+from tkinter import filedialog
 
 def zbusmenu(dataframes):
     # Filter dataframes to only include those with 'Bus' in the sheet name
@@ -134,3 +136,29 @@ def sel_time_menu():
     print(f"Reset time: {-rst_time:.2f} seconds, {-rst_time_cy:.1f} cycles")
 
     return
+
+def savetxt(buffer):
+    # Initialize Tkinter root
+    root = tk.Tk()
+    root.withdraw()  # Hides the small Tkinter window
+
+    # Ask user if they want to save the output using a Tkinter dialog
+    save_file = input("Save file to .txt? (y/n)")
+    if save_file and save_file.strip().lower() == 'y':
+        # Open save file dialog
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+            title="Choose filename"
+        )
+
+        # Check if a file path was provided
+        if file_path:
+            # Write the buffer to the file with UTF-8 encoding
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write("".join(buffer))
+        else:
+            print("File save cancelled.")
+
+    # Destroy the Tkinter root (clean up)
+    root.destroy()

@@ -1,9 +1,8 @@
-from menus import zbusmenu, fault_loc_menu, sel_time_menu
+from menus import zbusmenu, fault_loc_menu, sel_time_menu, savetxt
 from Classes import ZBus, ZLine, ZTrans
 from GetExcel import load_impedance_sheets, load_line_trace, load_clean_line_imp
 from CleanLineTrace import map_impedances
 from Calcs import primary_line_fault_calculation, locate_primary_line_fault_l_g, sec_trans_fault_calculation
-from savetxt import savetxt
 
 def main():
     # Load impedance sheets and clean dataframes
@@ -154,7 +153,7 @@ def main():
                 zline_selection.get_individual_parameters()
 
                 print(f"\nLine trace {first_sheet_name_trace}:")
-                zline_selection.display_info()
+                zline_selection.display_info(buffer)
 
                 if zbus_selection is not None and zline_selection is not None:
                     print(f"\n{first_sheet_name_trace}:")
