@@ -107,7 +107,7 @@ def load_line_trace():
             dataframes[new_sheet_name] = dataframes.pop(first_sheet_name)
             
             # Add voltage level column to line trace
-            voltage_map = {'R': 36, 'L': 13.2, 'V': 11.5, 'H': 4.6}
+            voltage_map = {'R': 36.0, 'L': 13.2, 'V': 11.5, 'H': 4.6}
             first_letter = new_sheet_name[0]
             voltage_level = voltage_map.get(first_letter, None)
             if voltage_level is not None:

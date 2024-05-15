@@ -173,6 +173,13 @@ def sec_trans_fault_calculation(ZBus_obj, Zline_obj, Ztrans_obj, buffer):
     else:
         Zo_lt_pu = 0 + 0j
 
+    if Ztrans_obj.trans_conn == 'Δ-Yg': 
+        Zo_lt_pu = 2 * (Zline_obj.total_Z_100MVA / 100) + (3 * (Ztrans_obj.Z_pos_trans / 100))
+    elif Ztrans_obj.trans_conn == 'Yg-Yg': 
+        Zo_lt_pu = 2 * (Zline_obj.total_Z_100MVA / 100) + (Zline_obj.total_Zo_100MVA / 100) + (3 * (Ztrans_obj.Z_pos_trans / 100))
+    else:
+        Zo_lt_pu = 0 + 0j
+
     #In pri. ohms
     Zpos_lt_pohms_mag = abs(Zpos_lt_pu) * Zbase
     Zpos_lt_angle_rads = cmath.phase(Zpos_lt_pu)
@@ -259,6 +266,10 @@ def sec_trans_fault_calculation(ZBus_obj, Zline_obj, Ztrans_obj, buffer):
     buffer.append(f"+Z: {Zpos_lt_pohms_mag:.2f}∠{Zpos_lt_angle_degs:.2f}° Pri. Ohms,   +Z: {Zpos_lt_sohms_mag:.2f}∠{Zpos_lt_angle_degs:.2f}° Sec. Ohms\n")
     if voltage_level != 4.6:
         buffer.append(f"Z0: {Zo_lt_pohms_mag:.2f}∠{Zo_lt_angle_degs:.2f}° Pri. Ohms,   +Z: {Zo_lt_sohms_mag:.2f}∠{Zo_lt_angle_degs:.2f}° Sec. Ohms\n")
+
+    buffer.append(f"\nBus + Line + Transformer Impedances (p.u.): \n")
+    buffer.append(f"+Z: {Zpos_pu:.3f} \n")
+    buffer.append(f"Z0: {Zo_pu:.3f} \n")
 
     buffer.append(f"\nX/R Positive Seq at secondary of transformer: {X_R_pos:.2f}\n")
     if Ztrans_obj.trans_conn == 'Δ-Yg' or Ztrans_obj.trans_conn == 'Yg-Yg':

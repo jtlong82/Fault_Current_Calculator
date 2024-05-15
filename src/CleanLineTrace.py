@@ -48,6 +48,8 @@ def clean_line_trace(dataframes):
     return cleaned_line_trace
 
 def map_impedances(df_linetrace, df_impedance):
+    print(df_linetrace)
+    print(df_impedance)
     # Create new columns in df_linetrace for the impedance values
     df_linetrace['% Z+ @ 100 MVA'] = np.nan
     df_linetrace['% Zo @ 100 MVA'] = np.nan
@@ -64,6 +66,8 @@ def map_impedances(df_linetrace, df_impedance):
             (df_impedance['Conductor Type'] == row['Conductor Type']) & 
             (df_impedance['Voltage_Level'] == row['Voltage_Level'])
         ]
+
+        print(filtered_df)
 
         # If there's only one match, update df_linetrace with the impedance values
         if len(filtered_df) == 1:

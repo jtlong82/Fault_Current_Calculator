@@ -52,6 +52,7 @@ def main():
             ptr = float(input("PT Ratio on line relay (PTR:1): "))
             print("\nLoad Line Trace...")
             line_trace = load_line_trace()
+            
             if line_trace is not None:
                 # If df_linetrace is a dictionary, get the DataFrame corresponding to the first sheet
                 if isinstance(line_trace, dict):
