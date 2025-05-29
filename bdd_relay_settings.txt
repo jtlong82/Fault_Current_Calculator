@@ -1,0 +1,9 @@
+BDD Relay Settings
+=================
+
+Three-Winding Transformer (BDD16B) - Existing Settings Analysis
+
+HV winding tap: 2.9 A
+MV winding tap: 5.0 A
+LV winding tap: 4.6 A
+Current slope setting: 25.0%
