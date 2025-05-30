@@ -1,0 +1,17 @@
+Error launching application:
+Traceback (most recent call last):
+  File "C:\Users\jlong\Documents\GitHub\Fault_Current_Calculator\src\launch_gui.py", line 100, in launch_application
+    main()
+  File "C:\Users\jlong\Documents\GitHub\Fault_Current_Calculator\src\main_gui.py", line 1150, in main
+    show_splash(root, duration=2.5)
+  File "C:\Users\jlong\Documents\GitHub\Fault_Current_Calculator\src\splash_screen.py", line 129, in show_splash
+    splash = SplashScreen(root, duration)
+  File "C:\Users\jlong\Documents\GitHub\Fault_Current_Calculator\src\splash_screen.py", line 37, in __init__
+    self.add_content()
+  File "C:\Users\jlong\Documents\GitHub\Fault_Current_Calculator\src\splash_screen.py", line 70, in add_content
+    self.canvas.create_text(300, 200, text="Version 2.0", font=('Segoe UI', 14),
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\tkinter\__init__.py", line 2839, in create_text
+    return self._create('text', args, kw)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\tkinter\__init__.py", line 2805, in _create
+    return self.tk.getint(self.tk.call(
+_tkinter.TclError: invalid color name "#ffffff80"

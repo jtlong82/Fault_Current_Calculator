@@ -28,13 +28,27 @@ class PowerSystemFaultCalculatorGUI:
         self.style = ttk.Style()
         self.style.theme_use('clam')
         
-        # Configure colors
-        self.bg_color = "#f0f0f0"
-        self.primary_color = "#2c3e50"
-        self.secondary_color = "#3498db"
-        self.success_color = "#27ae60"
-        self.warning_color = "#f39c12"
-        self.danger_color = "#e74c3c"
+        # Import and apply modern theme
+        try:
+            from gui_config import apply_theme, COLORS, FONTS
+            apply_theme(self.style)
+            self.colors = COLORS
+            self.fonts = FONTS
+        except ImportError:
+            # Fallback to basic styling if gui_config not available
+            self.colors = {
+                'background': '#f8f9fa',
+                'primary': '#1a1a2e',
+                'secondary': '#0466c8',
+                'card_bg': '#ffffff'
+            }
+            self.fonts = {
+                'default': ('Segoe UI', 10),
+                'heading': ('Segoe UI', 14, 'bold')
+            }
+        
+        # Configure root window
+        self.root.configure(bg=self.colors['background'])
         
         # Data storage
         self.bus_dataframes = None
@@ -65,74 +79,116 @@ class PowerSystemFaultCalculatorGUI:
         self.load_initial_data()
         
     def create_menu_bar(self):
-        menubar = tk.Menu(self.root)
+        menubar = tk.Menu(self.root, bg=self.colors['card_bg'], fg=self.colors['text'], 
+                         activebackground=self.colors['secondary'], activeforeground='white')
         self.root.config(menu=menubar)
         
         # File menu
-        file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu = tk.Menu(menubar, tearoff=0, bg=self.colors['card_bg'], fg=self.colors['text'],
+                           activebackground=self.colors['secondary'], activeforeground='white')
         menubar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Load Impedance Sheets", command=self.load_impedance_sheets_gui)
+        file_menu.add_command(label="Load Impedance Sheets", command=self.load_impedance_sheets_gui, 
+                             accelerator="Ctrl+O")
         file_menu.add_command(label="Load Line Impedances", command=self.load_line_impedances_gui)
-        file_menu.add_command(label="Load Line Trace", command=self.load_line_trace_gui)
+        file_menu.add_command(label="Load Line Trace", command=self.load_line_trace_gui, 
+                             accelerator="Ctrl+L")
         file_menu.add_separator()
-        file_menu.add_command(label="Save Results", command=self.save_results)
+        file_menu.add_command(label="Save Results", command=self.save_results, 
+                             accelerator="Ctrl+S")
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self.root.quit)
+        file_menu.add_command(label="Exit", command=self.root.quit, 
+                             accelerator="Ctrl+Q")
         
         # View menu
-        view_menu = tk.Menu(menubar, tearoff=0)
+        view_menu = tk.Menu(menubar, tearoff=0, bg=self.colors['card_bg'], fg=self.colors['text'],
+                           activebackground=self.colors['secondary'], activeforeground='white')
         menubar.add_cascade(label="View", menu=view_menu)
         view_menu.add_command(label="Clear Results", command=self.clear_results)
         view_menu.add_command(label="Reset All", command=self.reset_all)
+        view_menu.add_separator()
+        
+        # Theme submenu
+        theme_menu = tk.Menu(view_menu, tearoff=0, bg=self.colors['card_bg'], fg=self.colors['text'])
+        view_menu.add_cascade(label="Theme", menu=theme_menu)
+        
+        self.theme_var = tk.StringVar(value="light")
+        theme_menu.add_radiobutton(label="Light Mode", variable=self.theme_var, value="light",
+                                  command=lambda: self.change_theme("light"))
+        theme_menu.add_radiobutton(label="Dark Mode", variable=self.theme_var, value="dark",
+                                  command=lambda: self.change_theme("dark"))
         
         # Help menu
-        help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu = tk.Menu(menubar, tearoff=0, bg=self.colors['card_bg'], fg=self.colors['text'],
+                           activebackground=self.colors['secondary'], activeforeground='white')
         menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About", command=self.show_about)
+        help_menu.add_command(label="About", command=self.show_about, 
+                             accelerator="F1")
         help_menu.add_command(label="User Guide", command=self.show_user_guide)
         
-    def create_toolbar(self):
-        toolbar = ttk.Frame(self.main_container)
-        toolbar.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        # Bind keyboard shortcuts
+        self.root.bind_all("<Control-o>", lambda e: self.load_impedance_sheets_gui())
+        self.root.bind_all("<Control-l>", lambda e: self.load_line_trace_gui())
+        self.root.bind_all("<Control-s>", lambda e: self.save_results())
+        self.root.bind_all("<Control-q>", lambda e: self.root.quit())
+        self.root.bind_all("<F1>", lambda e: self.show_about())
         
-        # Create toolbar buttons with icons (using text for now)
-        ttk.Button(toolbar, text="📁 Load Data", command=self.load_all_data).pack(side=tk.LEFT, padx=2)
-        ttk.Button(toolbar, text="💾 Save", command=self.save_results).pack(side=tk.LEFT, padx=2)
-        ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
-        ttk.Button(toolbar, text="🔌 Bus Fault", command=lambda: self.notebook.select(0)).pack(side=tk.LEFT, padx=2)
-        ttk.Button(toolbar, text="⚡ Line Fault", command=lambda: self.notebook.select(1)).pack(side=tk.LEFT, padx=2)
-        ttk.Button(toolbar, text="🔄 Trans. Fault", command=lambda: self.notebook.select(2)).pack(side=tk.LEFT, padx=2)
-        ttk.Button(toolbar, text="📍 Locate Fault", command=lambda: self.notebook.select(3)).pack(side=tk.LEFT, padx=2)
-        ttk.Button(toolbar, text="⏱️ SEL Curves", command=lambda: self.notebook.select(4)).pack(side=tk.LEFT, padx=2)
+    def create_toolbar(self):
+        toolbar_frame = ttk.Frame(self.main_container, style='Card.TFrame')
+        toolbar_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=(10, 5))
+        
+        toolbar = ttk.Frame(toolbar_frame)
+        toolbar.pack(padx=10, pady=8)
+        
+        # Create toolbar buttons with better styling
+        button_style = {'style': 'TButton', 'width': 15}
+        
+        ttk.Button(toolbar, text="📁 Load Data", command=self.load_all_data, **button_style).pack(side=tk.LEFT, padx=3)
+        ttk.Button(toolbar, text="💾 Save Results", command=self.save_results, **button_style).pack(side=tk.LEFT, padx=3)
+        
+        ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
+        
+        ttk.Button(toolbar, text="⚡ Bus Fault", command=lambda: self.notebook.select(0), **button_style).pack(side=tk.LEFT, padx=3)
+        ttk.Button(toolbar, text="🔌 Line Fault", command=lambda: self.notebook.select(1), **button_style).pack(side=tk.LEFT, padx=3)
+        ttk.Button(toolbar, text="🔄 Trans. Fault", command=lambda: self.notebook.select(2), **button_style).pack(side=tk.LEFT, padx=3)
+        ttk.Button(toolbar, text="📍 Locate Fault", command=lambda: self.notebook.select(3), **button_style).pack(side=tk.LEFT, padx=3)
+        ttk.Button(toolbar, text="⏱️ SEL Curves", command=lambda: self.notebook.select(4), **button_style).pack(side=tk.LEFT, padx=3)
         
     def create_status_bar(self):
-        self.status_bar = ttk.Frame(self.root)
-        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.status_bar = ttk.Frame(self.root, style='Card.TFrame')
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(5, 10))
         
-        self.status_label = ttk.Label(self.status_bar, text="Ready", relief=tk.SUNKEN)
-        self.status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        status_content = ttk.Frame(self.status_bar)
+        status_content.pack(fill=tk.X, padx=15, pady=8)
         
-        self.data_status_label = ttk.Label(self.status_bar, text="No data loaded", relief=tk.SUNKEN)
-        self.data_status_label.pack(side=tk.RIGHT, padx=5)
+        self.status_label = ttk.Label(status_content, text="Ready", font=self.fonts['small'])
+        self.status_label.pack(side=tk.LEFT)
+        
+        self.data_status_label = ttk.Label(status_content, text="No data loaded", 
+                                         font=self.fonts['small'], foreground=self.colors['text_light'])
+        self.data_status_label.pack(side=tk.RIGHT)
         
     def create_main_content(self):
-        # Create notebook for tabs
-        self.notebook = ttk.Notebook(self.main_container)
-        self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # Create content frame with padding
+        content_frame = ttk.Frame(self.main_container)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
-        # Create tabs
+        # Create notebook for tabs
+        self.notebook = ttk.Notebook(content_frame)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
+        
+        # Create tabs with icons
         self.bus_fault_tab = ttk.Frame(self.notebook)
         self.line_fault_tab = ttk.Frame(self.notebook)
         self.trans_fault_tab = ttk.Frame(self.notebook)
         self.fault_location_tab = ttk.Frame(self.notebook)
         self.sel_curves_tab = ttk.Frame(self.notebook)
         
-        # Add tabs to notebook
-        self.notebook.add(self.bus_fault_tab, text="Bus Fault Current")
-        self.notebook.add(self.line_fault_tab, text="Primary Line Fault")
-        self.notebook.add(self.trans_fault_tab, text="Transformer Secondary Fault")
-        self.notebook.add(self.fault_location_tab, text="Fault Location")
-        self.notebook.add(self.sel_curves_tab, text="SEL U-Curves")
+        # Add tabs to notebook with better labels
+        self.notebook.add(self.bus_fault_tab, text="⚡ Bus Fault Current")
+        self.notebook.add(self.line_fault_tab, text="🔌 Primary Line Fault")
+        self.notebook.add(self.trans_fault_tab, text="🔄 Transformer Secondary")
+        self.notebook.add(self.fault_location_tab, text="📍 Fault Location")
+        self.notebook.add(self.sel_curves_tab, text="⏱️ SEL U-Curves")
         
         # Create content for each tab
         self.create_bus_fault_tab()
@@ -142,114 +198,154 @@ class PowerSystemFaultCalculatorGUI:
         self.create_sel_curves_tab()
         
     def create_bus_fault_tab(self):
-        # Create main frame
+        # Create main frame with padding
         main_frame = ttk.Frame(self.bus_fault_tab)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
-        # Input section
-        input_frame = ttk.LabelFrame(main_frame, text="Bus Selection", padding=10)
-        input_frame.pack(fill=tk.X, pady=(0, 10))
+        # Create grid layout
+        main_frame.columnconfigure(0, weight=1)
+        main_frame.columnconfigure(1, weight=1)
         
-        # Voltage level selection
-        ttk.Label(input_frame, text="Voltage Level:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
+        # Input section - Left side
+        input_frame = ttk.LabelFrame(main_frame, text="Bus Selection Parameters", padding=20)
+        input_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 10))
+        
+        # Add some vertical spacing between inputs
+        ttk.Label(input_frame, text="Voltage Level:", style='Subtitle.TLabel').grid(row=0, column=0, sticky=tk.W, pady=(0, 5))
         self.bus_voltage_var = tk.StringVar()
-        self.bus_voltage_combo = ttk.Combobox(input_frame, textvariable=self.bus_voltage_var, width=20)
-        self.bus_voltage_combo.grid(row=0, column=1, padx=5, pady=5)
+        self.bus_voltage_combo = ttk.Combobox(input_frame, textvariable=self.bus_voltage_var, width=25)
+        self.bus_voltage_combo.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         self.bus_voltage_combo.bind('<<ComboboxSelected>>', self.on_voltage_level_change)
         
-        # Station selection
-        ttk.Label(input_frame, text="Station:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(input_frame, text="Station:", style='Subtitle.TLabel').grid(row=2, column=0, sticky=tk.W, pady=(0, 5))
         self.bus_station_var = tk.StringVar()
-        self.bus_station_combo = ttk.Combobox(input_frame, textvariable=self.bus_station_var, width=40)
-        self.bus_station_combo.grid(row=1, column=1, padx=5, pady=5)
+        self.bus_station_combo = ttk.Combobox(input_frame, textvariable=self.bus_station_var, width=25)
+        self.bus_station_combo.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(0, 20))
         
-        # Calculate button
-        ttk.Button(input_frame, text="Calculate Bus Fault", 
-                  command=self.calculate_bus_fault).grid(row=2, column=0, columnspan=2, pady=10)
+        # Calculate button with primary style
+        calc_btn = ttk.Button(input_frame, text="Calculate Bus Fault", 
+                             command=self.calculate_bus_fault, style='Primary.TButton')
+        calc_btn.grid(row=4, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
         
-        # Results section
-        results_frame = ttk.LabelFrame(main_frame, text="Results", padding=10)
-        results_frame.pack(fill=tk.BOTH, expand=True)
+        # Quick info panel - Right side
+        info_frame = ttk.LabelFrame(main_frame, text="Quick Info", padding=20)
+        info_frame.grid(row=0, column=1, sticky=(tk.W, tk.E, tk.N), padx=(10, 0))
         
-        # Create text widget with scrollbar
-        self.bus_results_text = tk.Text(results_frame, wrap=tk.WORD, height=20, width=80, font=('Courier', 10))
+        info_text = """This calculation determines the available fault current at the selected bus.
+
+Key outputs:
+• 3-Phase fault current
+• Line-to-ground fault
+• Line-to-line fault
+• Line-to-line-to-ground fault
+
+Results include magnitude and angle for each phase."""
+        
+        ttk.Label(info_frame, text=info_text, wraplength=300, 
+                 foreground=self.colors['text_light']).pack(pady=10)
+        
+        # Results section - Bottom
+        results_frame = ttk.LabelFrame(main_frame, text="Calculation Results", padding=15)
+        results_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(20, 0))
+        
+        # Configure grid weights
+        main_frame.rowconfigure(1, weight=1)
+        results_frame.grid_columnconfigure(0, weight=1)
+        results_frame.grid_rowconfigure(0, weight=1)
+        
+        # Create text widget with modern styling
+        self.bus_results_text = tk.Text(results_frame, wrap=tk.WORD, height=15, 
+                                       font=self.fonts['monospace'], 
+                                       bg=self.colors['input_bg'],
+                                       relief=tk.FLAT,
+                                       borderwidth=1)
         scrollbar = ttk.Scrollbar(results_frame, orient=tk.VERTICAL, command=self.bus_results_text.yview)
         self.bus_results_text.configure(yscrollcommand=scrollbar.set)
         
         self.bus_results_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
         
-        results_frame.grid_columnconfigure(0, weight=1)
-        results_frame.grid_rowconfigure(0, weight=1)
-        
     def create_line_fault_tab(self):
-        # Create main frame
+        # Create main frame with padding
         main_frame = ttk.Frame(self.line_fault_tab)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
         
-        # Input section
-        input_frame = ttk.LabelFrame(main_frame, text="Line Fault Parameters", padding=10)
-        input_frame.pack(fill=tk.X, pady=(0, 10))
+        # Top section - Input parameters
+        top_frame = ttk.Frame(main_frame)
+        top_frame.pack(fill=tk.X, pady=(0, 20))
         
-        # Create two columns
-        left_frame = ttk.Frame(input_frame)
-        left_frame.grid(row=0, column=0, padx=10)
-        
-        right_frame = ttk.Frame(input_frame)
-        right_frame.grid(row=0, column=1, padx=10)
+        # Create three columns
+        top_frame.columnconfigure(0, weight=1)
+        top_frame.columnconfigure(1, weight=1)
+        top_frame.columnconfigure(2, weight=1)
         
         # Left column - Bus selection
-        ttk.Label(left_frame, text="Bus Selection", font=('Arial', 10, 'bold')).grid(row=0, column=0, columnspan=2, pady=5)
+        bus_frame = ttk.LabelFrame(top_frame, text="Bus Selection", padding=15)
+        bus_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(0, 10))
         
-        ttk.Label(left_frame, text="Voltage Level:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(bus_frame, text="Voltage Level:", style='Subtitle.TLabel').grid(row=0, column=0, sticky=tk.W, pady=(0, 5))
         self.line_voltage_var = tk.StringVar()
-        self.line_voltage_combo = ttk.Combobox(left_frame, textvariable=self.line_voltage_var, width=20)
-        self.line_voltage_combo.grid(row=1, column=1, padx=5, pady=5)
+        self.line_voltage_combo = ttk.Combobox(bus_frame, textvariable=self.line_voltage_var, width=20)
+        self.line_voltage_combo.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         self.line_voltage_combo.bind('<<ComboboxSelected>>', self.on_line_voltage_change)
         
-        ttk.Label(left_frame, text="Station:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(bus_frame, text="Station:", style='Subtitle.TLabel').grid(row=2, column=0, sticky=tk.W, pady=(0, 5))
         self.line_station_var = tk.StringVar()
-        self.line_station_combo = ttk.Combobox(left_frame, textvariable=self.line_station_var, width=30)
-        self.line_station_combo.grid(row=2, column=1, padx=5, pady=5)
+        self.line_station_combo = ttk.Combobox(bus_frame, textvariable=self.line_station_var, width=20)
+        self.line_station_combo.grid(row=3, column=0, sticky=(tk.W, tk.E))
         
-        # Right column - Relay settings
-        ttk.Label(right_frame, text="Relay Settings", font=('Arial', 10, 'bold')).grid(row=0, column=0, columnspan=2, pady=5)
+        # Middle column - Relay settings
+        relay_frame = ttk.LabelFrame(top_frame, text="Relay Settings", padding=15)
+        relay_frame.grid(row=0, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), padx=10)
         
-        ttk.Label(right_frame, text="CT Ratio (CTR:1):").grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(relay_frame, text="CT Ratio (CTR:1):", style='Subtitle.TLabel').grid(row=0, column=0, sticky=tk.W, pady=(0, 5))
         self.ctr_var = tk.StringVar(value="600")
-        ttk.Entry(right_frame, textvariable=self.ctr_var, width=15).grid(row=1, column=1, padx=5, pady=5)
+        ctr_entry = ttk.Entry(relay_frame, textvariable=self.ctr_var, width=15)
+        ctr_entry.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 15))
         
-        ttk.Label(right_frame, text="PT Ratio (PTR:1):").grid(row=2, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(relay_frame, text="PT Ratio (PTR:1):", style='Subtitle.TLabel').grid(row=2, column=0, sticky=tk.W, pady=(0, 5))
         self.ptr_var = tk.StringVar(value="100")
-        ttk.Entry(right_frame, textvariable=self.ptr_var, width=15).grid(row=2, column=1, padx=5, pady=5)
+        ptr_entry = ttk.Entry(relay_frame, textvariable=self.ptr_var, width=15)
+        ptr_entry.grid(row=3, column=0, sticky=(tk.W, tk.E))
         
-        # Line trace section
-        trace_frame = ttk.Frame(input_frame)
-        trace_frame.grid(row=1, column=0, columnspan=2, pady=10)
+        # Right column - Line trace
+        trace_frame = ttk.LabelFrame(top_frame, text="Line Trace", padding=15)
+        trace_frame.grid(row=0, column=2, sticky=(tk.W, tk.E, tk.N, tk.S), padx=(10, 0))
         
-        ttk.Label(trace_frame, text="Line Trace File:").pack(side=tk.LEFT, padx=5)
-        self.line_trace_label = ttk.Label(trace_frame, text="No file loaded", relief=tk.SUNKEN, width=50)
-        self.line_trace_label.pack(side=tk.LEFT, padx=5)
-        ttk.Button(trace_frame, text="Load Trace", command=self.load_line_trace_gui).pack(side=tk.LEFT, padx=5)
+        self.line_trace_label = ttk.Label(trace_frame, text="No file loaded", 
+                                         relief=tk.FLAT, 
+                                         background=self.colors['border_light'],
+                                         padding=10)
+        self.line_trace_label.pack(fill=tk.X, pady=(0, 10))
+        
+        ttk.Button(trace_frame, text="Load Line Trace", 
+                  command=self.load_line_trace_gui,
+                  style='TButton').pack(fill=tk.X)
         
         # Calculate button
-        ttk.Button(input_frame, text="Calculate Line Fault", 
-                  command=self.calculate_line_fault).grid(row=2, column=0, columnspan=2, pady=10)
+        calc_frame = ttk.Frame(main_frame)
+        calc_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        calc_btn = ttk.Button(calc_frame, text="Calculate Line Fault", 
+                             command=self.calculate_line_fault, 
+                             style='Primary.TButton')
+        calc_btn.pack()
         
         # Results section
-        results_frame = ttk.LabelFrame(main_frame, text="Results", padding=10)
+        results_frame = ttk.LabelFrame(main_frame, text="Calculation Results", padding=15)
         results_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Create text widget with scrollbar
-        self.line_results_text = tk.Text(results_frame, wrap=tk.WORD, height=20, width=80, font=('Courier', 10))
+        # Create text widget with modern styling
+        self.line_results_text = tk.Text(results_frame, wrap=tk.WORD, height=15, 
+                                        font=self.fonts['monospace'],
+                                        bg=self.colors['input_bg'],
+                                        relief=tk.FLAT,
+                                        borderwidth=1)
         scrollbar = ttk.Scrollbar(results_frame, orient=tk.VERTICAL, command=self.line_results_text.yview)
         self.line_results_text.configure(yscrollcommand=scrollbar.set)
         
-        self.line_results_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
-        
-        results_frame.grid_columnconfigure(0, weight=1)
-        results_frame.grid_rowconfigure(0, weight=1)
+        self.line_results_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
     def create_trans_fault_tab(self):
         # Create main frame with paned window
@@ -510,17 +606,17 @@ class PowerSystemFaultCalculatorGUI:
     def load_initial_data(self):
         """Try to load initial data files"""
         try:
-            self.status_label.config(text="Loading initial data...")
+            self.update_status("Loading initial data...", "info")
             self.bus_dataframes = load_impedance_sheets()
             self.line_dataframes = load_clean_line_imp()
             
             if self.bus_dataframes:
                 self.update_voltage_combos()
                 self.data_status_label.config(text="Data loaded")
-                self.status_label.config(text="Ready")
+                self.update_status("Ready", "success")
             else:
                 self.data_status_label.config(text="No data loaded")
-                self.status_label.config(text="Please load impedance sheets")
+                self.update_status("Please load impedance sheets", "warning")
         except Exception as e:
             self.show_error(f"Error loading initial data: {str(e)}")
             
@@ -649,7 +745,7 @@ class PowerSystemFaultCalculatorGUI:
             self.bus_results_text.delete(1.0, tk.END)
             self.bus_results_text.insert(tk.END, "".join(self.buffer))
             
-            self.status_label.config(text="Bus fault calculation completed")
+            self.update_status("Bus fault calculation completed", "success")
             
         except Exception as e:
             self.show_error(f"Error calculating bus fault: {str(e)}")
@@ -721,7 +817,7 @@ class PowerSystemFaultCalculatorGUI:
             self.line_results_text.delete(1.0, tk.END)
             self.line_results_text.insert(tk.END, "".join(self.buffer))
             
-            self.status_label.config(text="Line fault calculation completed")
+            self.update_status("Line fault calculation completed", "success")
             
         except Exception as e:
             self.show_error(f"Error calculating line fault: {str(e)}")
@@ -780,7 +876,7 @@ class PowerSystemFaultCalculatorGUI:
             self.trans_results_text.delete(1.0, tk.END)
             self.trans_results_text.insert(tk.END, "".join(self.buffer))
             
-            self.status_label.config(text="Transformer fault calculation completed")
+            self.update_status("Transformer fault calculation completed", "success")
             
         except Exception as e:
             self.show_error(f"Error calculating transformer fault: {str(e)}")
@@ -857,7 +953,7 @@ class PowerSystemFaultCalculatorGUI:
                      f"Calculated Current: {current:.0f} Amps"
             )
             
-            self.status_label.config(text="Fault location calculated")
+            self.update_status("Fault location calculated", "success")
             
         except Exception as e:
             self.show_error(f"Error locating fault: {str(e)}")
@@ -912,7 +1008,7 @@ class PowerSystemFaultCalculatorGUI:
             # Additional info
             self.sel_info_label.config(text=f"M = {m:.3f} (Multiple of pickup)")
             
-            self.status_label.config(text="SEL times calculated")
+            self.update_status("SEL times calculated", "success")
             
         except Exception as e:
             self.show_error(f"Error calculating SEL times: {str(e)}")
@@ -937,7 +1033,7 @@ class PowerSystemFaultCalculatorGUI:
         self.rst_time_label.config(text="")
         self.sel_info_label.config(text="")
         self.buffer = []
-        self.status_label.config(text="Results cleared")
+        self.update_status("Results cleared", "info")
         
     def reset_all(self):
         """Reset all data and results"""
@@ -949,7 +1045,7 @@ class PowerSystemFaultCalculatorGUI:
         self.ztrans_selection = None
         self.line_trace = None
         self.data_status_label.config(text="No data loaded")
-        self.status_label.config(text="All data reset")
+        self.update_status("All data reset", "warning")
         
     def show_about(self):
         """Show about dialog"""
@@ -1014,12 +1110,59 @@ TIPS:
     def show_error(self, message):
         """Show error message"""
         messagebox.showerror("Error", message)
-        self.status_label.config(text="Error occurred")
+        self.update_status("Error occurred", "error")
+    
+    def change_theme(self, theme_name):
+        """Change the application theme"""
+        try:
+            from gui_config import apply_theme, THEMES
+            # Update colors
+            self.colors = THEMES[theme_name]
+            # Reapply theme
+            apply_theme(self.style, theme_name)
+            # Update root window background
+            self.root.configure(bg=self.colors['background'])
+            # Show confirmation
+            self.update_status(f"Theme changed to {theme_name} mode", "success")
+        except Exception as e:
+            self.show_error(f"Error changing theme: {str(e)}")
+    
+    def update_status(self, message, status_type="info"):
+        """Update status bar with better visual feedback"""
+        # Update message
+        self.status_label.config(text=message)
+        
+        # Briefly highlight status bar for important messages
+        if status_type == "success":
+            self.status_label.config(foreground=self.colors['success'])
+            self.root.after(2000, lambda: self.status_label.config(foreground=self.colors['text']))
+        elif status_type == "error":
+            self.status_label.config(foreground=self.colors['danger'])
+        elif status_type == "warning":
+            self.status_label.config(foreground=self.colors['warning'])
 
 def main():
     root = tk.Tk()
+    
+    # Splash screen disabled for now - uncomment below to enable when splash_screen.py is available
+    # try:
+    #     from splash_screen import show_splash
+    #     show_splash(root, duration=2.5)
+    # except (ImportError, Exception) as e:
+    #     print(f"Splash screen not available: {e}")
+    #     pass
+    
     app = PowerSystemFaultCalculatorGUI(root)
     root.mainloop()
 
 if __name__ == '__main__':
-    main()
+    # Run without splash screen if there are any import issues
+    try:
+        main()
+    except Exception as e:
+        print(f"Error in main: {e}")
+        # Fallback - run without splash screen
+        import tkinter as tk
+        root = tk.Tk()
+        app = PowerSystemFaultCalculatorGUI(root)
+        root.mainloop()
