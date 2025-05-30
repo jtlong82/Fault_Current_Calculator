@@ -18,6 +18,14 @@ from Calcs import (primary_line_fault_calculation, locate_primary_line_fault_l_g
                    sec_trans_fault_calculation, locate_primary_line_fault_3ph,
                    locate_primary_line_fault_l_l, locate_primary_line_fault_l_l_g)
 
+# Try to import GUI version of map_impedances
+try:
+    from CleanLineTrace_GUI import map_impedances_gui
+    GUI_MAPPING_AVAILABLE = True
+except ImportError:
+    GUI_MAPPING_AVAILABLE = False
+    print("GUI impedance mapping not available, using terminal version")
+
 class PowerSystemFaultCalculatorGUI:
     def __init__(self, root):
         self.root = root
@@ -44,7 +52,9 @@ class PowerSystemFaultCalculatorGUI:
             }
             self.fonts = {
                 'default': ('Segoe UI', 10),
-                'heading': ('Segoe UI', 14, 'bold')
+                'heading': ('Segoe UI', 14, 'bold'),
+                'small': ('Segoe UI', 9),
+                'monospace': ('Consolas', 10)
             }
         
         # Configure root window
@@ -322,6 +332,12 @@ Results include magnitude and angle for each phase."""
                   command=self.load_line_trace_gui,
                   style='TButton').pack(fill=tk.X)
         
+        # Add note about reactor selection
+        ttk.Label(trace_frame, 
+                 text="Note: 11.5kV systems will prompt\nfor reactor selection",
+                 font=self.fonts['small'], 
+                 foreground=self.colors['text_light']).pack(pady=(10, 0))
+        
         # Calculate button
         calc_frame = ttk.Frame(main_frame)
         calc_frame.pack(fill=tk.X, pady=(0, 20))
@@ -445,9 +461,15 @@ Results include magnitude and angle for each phase."""
         self.trans_trace_label.pack(side=tk.LEFT, padx=5)
         ttk.Button(trace_frame, text="Load", command=self.load_trans_line_trace).pack(side=tk.LEFT)
         
+        # Add note about reactor selection
+        note_label = ttk.Label(input_frame, 
+                              text="Note: For 11.5kV systems, reactor selection will appear during calculation.",
+                              font=self.fonts['small'], foreground=self.colors['text_light'])
+        note_label.grid(row=2, column=0, columnspan=3, pady=(0, 10))
+        
         # Calculate button
         ttk.Button(input_frame, text="Calculate Transformer Fault", 
-                  command=self.calculate_trans_fault).grid(row=2, column=0, columnspan=3, pady=10)
+                  command=self.calculate_trans_fault).grid(row=3, column=0, columnspan=3, pady=10)
         
         # Bottom frame for results
         bottom_frame = ttk.Frame(paned)
@@ -499,27 +521,33 @@ Results include magnitude and angle for each phase."""
         self.loc_trace_label.grid(row=3, column=1, padx=5, pady=10)
         ttk.Button(input_frame, text="Load", command=self.load_loc_line_trace).grid(row=3, column=2, padx=5)
         
+        # Add note about reactor selection
+        note_label = ttk.Label(input_frame, 
+                              text="Note: 11.5kV systems will prompt for reactor selection",
+                              font=self.fonts['small'], foreground=self.colors['text_light'])
+        note_label.grid(row=4, column=0, columnspan=3, sticky=tk.W, padx=5)
+        
         # Fault parameters
-        ttk.Label(input_frame, text="Fault Type:").grid(row=4, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(input_frame, text="Fault Type:").grid(row=5, column=0, sticky=tk.W, padx=5, pady=5)
         self.fault_type_var = tk.StringVar()
         self.fault_type_combo = ttk.Combobox(input_frame, textvariable=self.fault_type_var, width=20)
         self.fault_type_combo['values'] = ['3 Phase', 'Line to Ground', 'Line to Line', 'Double Line to Ground']
-        self.fault_type_combo.grid(row=4, column=1, padx=5, pady=5)
+        self.fault_type_combo.grid(row=5, column=1, padx=5, pady=5)
         
-        ttk.Label(input_frame, text="Fault Magnitude (A):").grid(row=5, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(input_frame, text="Fault Magnitude (A):").grid(row=6, column=0, sticky=tk.W, padx=5, pady=5)
         self.fault_mag_var = tk.StringVar()
-        ttk.Entry(input_frame, textvariable=self.fault_mag_var, width=20).grid(row=5, column=1, padx=5, pady=5)
+        ttk.Entry(input_frame, textvariable=self.fault_mag_var, width=20).grid(row=6, column=1, padx=5, pady=5)
         
-        ttk.Label(input_frame, text="Calculation Type:").grid(row=6, column=0, sticky=tk.W, padx=5, pady=5)
+        ttk.Label(input_frame, text="Calculation Type:").grid(row=7, column=0, sticky=tk.W, padx=5, pady=5)
         self.calc_type_var = tk.StringVar(value="Quick")
         ttk.Radiobutton(input_frame, text="Quick", variable=self.calc_type_var, 
-                       value="Quick").grid(row=6, column=1, sticky=tk.W)
+                       value="Quick").grid(row=7, column=1, sticky=tk.W)
         ttk.Radiobutton(input_frame, text="Accurate", variable=self.calc_type_var, 
-                       value="Accurate").grid(row=7, column=1, sticky=tk.W)
+                       value="Accurate").grid(row=8, column=1, sticky=tk.W)
         
         # Calculate button
         ttk.Button(input_frame, text="Locate Fault", 
-                  command=self.locate_fault).grid(row=8, column=0, columnspan=2, pady=20)
+                  command=self.locate_fault).grid(row=9, column=0, columnspan=2, pady=20)
         
         # Right side - Plot
         right_frame = ttk.Frame(paned)
@@ -799,7 +827,11 @@ Results include magnitude and angle for each phase."""
             else:
                 line_dataframes_df = self.line_dataframes
                 
-            line_trace_df = map_impedances(line_trace_df, line_dataframes_df)
+            # Use GUI version if available
+            if GUI_MAPPING_AVAILABLE:
+                line_trace_df = map_impedances_gui(line_trace_df, line_dataframes_df, self.root)
+            else:
+                line_trace_df = map_impedances(line_trace_df, line_dataframes_df)
             
             # Create ZLine object
             self.zline_selection = ZLine(line_trace_df, first_sheet_name_trace, ctr, ptr)
@@ -825,10 +857,13 @@ Results include magnitude and angle for each phase."""
     def calculate_trans_fault(self):
         """Calculate transformer fault current"""
         try:
-            # First calculate line fault
-            self.calculate_line_fault()
-            
+            # First ensure line fault is calculated
+            if not self.zline_selection:
+                # Try to calculate line fault first
+                self.calculate_line_fault()
+                
             if not self.zbus_selection or not self.zline_selection:
+                messagebox.showwarning("Warning", "Please complete line fault calculation first.")
                 return
                 
             # Get transformer parameters
@@ -923,7 +958,12 @@ Results include magnitude and angle for each phase."""
             else:
                 line_dataframes_df = self.line_dataframes
                 
-            line_trace_df = map_impedances(line_trace_df, line_dataframes_df)
+            # Use GUI version if available
+            if GUI_MAPPING_AVAILABLE:
+                line_trace_df = map_impedances_gui(line_trace_df, line_dataframes_df, self.root)
+            else:
+                line_trace_df = map_impedances(line_trace_df, line_dataframes_df)
+                
             zline_obj = ZLine(line_trace_df, first_sheet_name_trace, 1, 1)
             zline_obj.get_individual_parameters()
             
