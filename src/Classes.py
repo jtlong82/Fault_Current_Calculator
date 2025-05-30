@@ -188,6 +188,7 @@ class ZLine:
         self.ctr = ctr
 
 
+
     def get_individual_parameters(self):
         self.total_Z_100MVA = 0  # Initialize accumulator for 'Total % Z @ 100 MVA'
         self.total_Zo_100MVA = 0
@@ -198,18 +199,27 @@ class ZLine:
             line_type = str(row['Type'])
             conductor_size = str(row['Conductor Size'])
             conductor_type = str(row['Conductor Type'])
-            length = float(row['Length'])
-            voltage_level = float(row['Voltage_Level'])
-            z_100MVA = complex(row['% Z+ @ 100 MVA'])
-            zo_100MVA = complex(row['% Zo @ 100 MVA'])
-            mapped_wire_type = str(row['Mapped Wire Type'])
-            pole_type = str(row['Pole Type'])
-            ground = str(row['Ground?'])
+            voltage_level = float(row['Voltage_Level']) if pd.notna(row['Voltage_Level']) else 0
+            z_100MVA = complex(row['% Z+ @ 100 MVA']) if pd.notna(row['% Z+ @ 100 MVA']) else 0j
+            zo_100MVA = complex(row['% Zo @ 100 MVA']) if pd.notna(row['% Zo @ 100 MVA']) else 0j
+            mapped_wire_type = str(row['Mapped Wire Type']) if pd.notna(row['Mapped Wire Type']) else ''
+            pole_type = str(row['Pole Type']) if pd.notna(row['Pole Type']) else ''
+            ground = str(row['Ground?']) if pd.notna(row['Ground?']) else ''
             
-            conversion_factor = 5280 if (line_type == 'OH Pri. Conductor' and (voltage_level == 36 or voltage_level == 11.5)) else 1000
-
-            total_pos_impedance = z_100MVA * (length / conversion_factor)
-            total_zero_impedance = zo_100MVA * (length / conversion_factor)
+            # Handle reactor specially - it has no length
+            if line_type == 'Reactor':
+                # For reactors, the impedance is already the total impedance (not per unit length)
+                # Reactors only have positive sequence impedance (phase devices)
+                # Zero sequence current bypasses the reactor through the neutral/ground
+                total_pos_impedance = z_100MVA
+                total_zero_impedance = zo_100MVA  # Should be 0 for reactors
+                length = 0
+            else:
+                # For regular conductors, calculate based on length
+                length = float(row['Length']) if pd.notna(row['Length']) else 0
+                conversion_factor = 5280 if (line_type == 'OH Pri. Conductor' and (voltage_level == 36 or voltage_level == 11.5)) else 1000
+                total_pos_impedance = z_100MVA * (length / conversion_factor)
+                total_zero_impedance = zo_100MVA * (length / conversion_factor)
             
             formatted_pos_impedance = "{:.2f}+{:.2f}j".format(total_pos_impedance.real, total_pos_impedance.imag)
             formatted_zero_impedance = "{:.2f}+{:.2f}j".format(total_zero_impedance.real, total_zero_impedance.imag)
@@ -220,12 +230,15 @@ class ZLine:
             # Update the accumulators
             self.total_Z_100MVA += total_pos_impedance
             self.total_Zo_100MVA += total_zero_impedance
-            self.total_length_feet += length
-            self.total_length_miles += length/5280
+            
+            # Only add to length if it's not a reactor
+            if line_type != 'Reactor':
+                self.total_length_feet += length
+                self.total_length_miles += length/5280
 
-            #Convert to Ohms
-            self.total_Z_100MVA_pu = self.total_Z_100MVA / 100
-            self.total_Zo_100MVA_pu = self.total_Zo_100MVA / 100
+        #Convert to Ohms
+        self.total_Z_100MVA_pu = self.total_Z_100MVA / 100
+        self.total_Zo_100MVA_pu = self.total_Zo_100MVA / 100
 
     def display_info(self, buffer):
         buffer.append(f"{self.df_linetrace}\n")
