@@ -399,6 +399,7 @@ Results include magnitude and angle for each phase."""
         self.trans_station_var = tk.StringVar()
         self.trans_station_combo = ttk.Combobox(col1, textvariable=self.trans_station_var, width=25)
         self.trans_station_combo.grid(row=2, column=1, padx=5, pady=5)
+        self.trans_station_combo.bind('<<ComboboxSelected>>', self.on_trans_station_change)
         
         # Column 2 - Relay settings
         ttk.Label(col2, text="Relay Settings", font=('Arial', 10, 'bold')).grid(row=0, column=0, columnspan=2, pady=5)
@@ -514,6 +515,7 @@ Results include magnitude and angle for each phase."""
         self.loc_station_var = tk.StringVar()
         self.loc_station_combo = ttk.Combobox(input_frame, textvariable=self.loc_station_var, width=30)
         self.loc_station_combo.grid(row=2, column=1, padx=5, pady=5)
+        self.loc_station_combo.bind('<<ComboboxSelected>>', self.on_loc_station_change)
         
         # Line trace
         ttk.Label(input_frame, text="Line Trace:").grid(row=3, column=0, sticky=tk.W, padx=5, pady=10)
@@ -711,21 +713,50 @@ Results include magnitude and angle for each phase."""
                          self.trans_voltage_combo, self.loc_voltage_combo]:
                 combo['values'] = voltage_levels
                 
+            # If voltage levels available, set the first one as default for all
+            if voltage_levels:
+                default_voltage = voltage_levels[0]
+                self.bus_voltage_var.set(default_voltage)
+                self.line_voltage_var.set(default_voltage)
+                self.trans_voltage_var.set(default_voltage)
+                self.loc_voltage_var.set(default_voltage)
+                
+                # Update all station combos with the default voltage
+                for combo in [self.bus_station_combo, self.line_station_combo,
+                             self.trans_station_combo, self.loc_station_combo]:
+                    self.update_station_combo(default_voltage, combo)
+                
     def on_voltage_level_change(self, event):
         """Update station combo when voltage level changes"""
-        self.update_station_combo(self.bus_voltage_var.get(), self.bus_station_combo)
+        voltage = self.bus_voltage_var.get()
+        self.update_station_combo(voltage, self.bus_station_combo)
+        
+        # Propagate to other tabs
+        self.sync_voltage_selection(voltage, source='bus')
         
     def on_line_voltage_change(self, event):
         """Update station combo for line fault tab"""
-        self.update_station_combo(self.line_voltage_var.get(), self.line_station_combo)
+        voltage = self.line_voltage_var.get()
+        self.update_station_combo(voltage, self.line_station_combo)
+        
+        # Propagate to other tabs
+        self.sync_voltage_selection(voltage, source='line')
         
     def on_trans_voltage_change(self, event):
         """Update station combo for transformer tab"""
-        self.update_station_combo(self.trans_voltage_var.get(), self.trans_station_combo)
+        voltage = self.trans_voltage_var.get()
+        self.update_station_combo(voltage, self.trans_station_combo)
+        
+        # Propagate to other tabs
+        self.sync_voltage_selection(voltage, source='trans')
         
     def on_loc_voltage_change(self, event):
         """Update station combo for fault location tab"""
-        self.update_station_combo(self.loc_voltage_var.get(), self.loc_station_combo)
+        voltage = self.loc_voltage_var.get()
+        self.update_station_combo(voltage, self.loc_station_combo)
+        
+        # Propagate to other tabs
+        self.sync_voltage_selection(voltage, source='location')
         
     def update_station_combo(self, voltage_level, station_combo):
         """Update station combo box based on voltage level"""
@@ -734,6 +765,29 @@ Results include magnitude and angle for each phase."""
             if voltage_df is not None:
                 stations = voltage_df.iloc[:, 0].tolist()
                 station_combo['values'] = stations
+                
+                # Make the combobox searchable
+                self.make_combobox_searchable(station_combo, stations)
+                
+    def on_bus_station_change(self, event):
+        """Handle station selection in bus fault tab"""
+        station = self.bus_station_var.get()
+        self.sync_station_selection(station, source='bus')
+        
+    def on_line_station_change(self, event):
+        """Handle station selection in line fault tab"""
+        station = self.line_station_var.get()
+        self.sync_station_selection(station, source='line')
+        
+    def on_trans_station_change(self, event):
+        """Handle station selection in transformer tab"""
+        station = self.trans_station_var.get()
+        self.sync_station_selection(station, source='trans')
+        
+    def on_loc_station_change(self, event):
+        """Handle station selection in fault location tab"""
+        station = self.loc_station_var.get()
+        self.sync_station_selection(station, source='location')
                 
     def on_trans_type_change(self):
         """Handle transformer type change"""
@@ -1180,6 +1234,97 @@ TIPS:
             self.status_label.config(foreground=self.colors['danger'])
         elif status_type == "warning":
             self.status_label.config(foreground=self.colors['warning'])
+    
+    def sync_voltage_selection(self, voltage, source=''):
+        """Synchronize voltage selection across all tabs"""
+        if not voltage:
+            return
+            
+        # Update all voltage combos except the source
+        if source != 'bus' and self.bus_voltage_var.get() != voltage:
+            self.bus_voltage_var.set(voltage)
+            self.update_station_combo(voltage, self.bus_station_combo)
+            
+        if source != 'line' and self.line_voltage_var.get() != voltage:
+            self.line_voltage_var.set(voltage)
+            self.update_station_combo(voltage, self.line_station_combo)
+            
+        if source != 'trans' and self.trans_voltage_var.get() != voltage:
+            self.trans_voltage_var.set(voltage)
+            self.update_station_combo(voltage, self.trans_station_combo)
+            
+        if source != 'location' and self.loc_voltage_var.get() != voltage:
+            self.loc_voltage_var.set(voltage)
+            self.update_station_combo(voltage, self.loc_station_combo)
+    
+    def sync_station_selection(self, station, source=''):
+        """Synchronize station selection across all tabs"""
+        if not station:
+            return
+            
+        # Update all station combos except the source
+        if source != 'bus' and self.bus_station_var.get() != station:
+            self.bus_station_var.set(station)
+            
+        if source != 'line' and self.line_station_var.get() != station:
+            self.line_station_var.set(station)
+            
+        if source != 'trans' and self.trans_station_var.get() != station:
+            self.trans_station_var.set(station)
+            
+        if source != 'location' and self.loc_station_var.get() != station:
+            self.loc_station_var.set(station)
+    
+    def make_combobox_searchable(self, combobox, values_list):
+        """Make a combobox searchable by typing"""
+        def on_keyrelease(event):
+            # Get the typed value
+            value = event.widget.get()
+            
+            if value == '':
+                # If empty, show all values
+                combobox['values'] = values_list
+            else:
+                # Filter values that contain the typed text (case insensitive)
+                filtered = [item for item in values_list if value.lower() in item.lower()]
+                combobox['values'] = filtered
+                
+                # Update status to show number of matches
+                if len(filtered) == 0:
+                    self.update_status(f"No stations found matching '{value}'", "warning")
+                elif len(filtered) == 1:
+                    self.update_status(f"1 station found matching '{value}'", "info")
+                    # Auto-select if only one match
+                    combobox.set(filtered[0])
+                    # Trigger the selection event
+                    combobox.event_generate('<<ComboboxSelected>>')
+                    # Also manually trigger sync in case event doesn't fire
+                    if combobox == self.bus_station_combo:
+                        self.sync_station_selection(filtered[0], source='bus')
+                    elif combobox == self.line_station_combo:
+                        self.sync_station_selection(filtered[0], source='line')
+                    elif combobox == self.trans_station_combo:
+                        self.sync_station_selection(filtered[0], source='trans')
+                    elif combobox == self.loc_station_combo:
+                        self.sync_station_selection(filtered[0], source='location')
+                else:
+                    self.update_status(f"{len(filtered)} stations found matching '{value}'", "info")
+                
+                # If there's at least one match, show dropdown
+                if filtered:
+                    combobox.event_generate('<Down>')
+        
+        # Bind the key release event
+        combobox.bind('<KeyRelease>', on_keyrelease)
+        
+        # Also bind focus events to restore full list
+        def on_focus_in(event):
+            combobox.configure(values=values_list)
+            self.update_status("Ready", "info")
+            
+        combobox.bind('<FocusIn>', on_focus_in)
+        
+        return combobox
 
 def main():
     root = tk.Tk()
